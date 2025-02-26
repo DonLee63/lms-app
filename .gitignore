@@ -41,3 +41,37 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# 🔹 Thư mục build và output
+build/
+.android/
+.ios/
+web/
+windows/
+linux/
+macos/
+
+# 🔹 File cấu hình máy cá nhân
+.flutter-plugins
+.flutter-plugins-dependencies
+.metadata
+.packages
+pubspec.lock
+
+# 🔹 Thư viện cài qua pub get (không cần đẩy lên)
+.dart_tool/
+
+# 🔹 File hệ thống của IDE
+.idea/
+.vscode/
+
+# 🔹 File hệ thống của MacOS/Linux/Windows
+*.DS_Store
+*.log
+*.swp
+*.swo
+
+# 🔹 Nếu dùng Firebase hoặc các API key, ẩn file chứa key
+*.env
+google-services.json
+firebase_options.dart
