@@ -28,7 +28,6 @@ class PhanCongScreen extends ConsumerWidget {
                 subtitle: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Tín chỉ: ${phancong.phancongId}'),
                     Text('Tín chỉ: ${phancong.tinchi}'),
                     Text('Lớp: ${phancong.classCourse}'),
                     Text('Ngày phân công: ${phancong.ngayPhanCong}'),

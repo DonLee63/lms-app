@@ -4,68 +4,106 @@ import 'package:intl/intl.dart';
 import '../../providers/attendance_provider.dart';
 import '../../providers/course_provider.dart';
 
-class StudentAttendanceScreen extends ConsumerWidget {
+class StudentAttendanceScreen extends ConsumerStatefulWidget {
   final int studentId;
 
   const StudentAttendanceScreen({super.key, required this.studentId});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final timetableAsync = ref.watch(timetableProvider(studentId));
-    final today = DateFormat('yyyy-MM-dd').format(DateTime.now()); // Lấy ngày hiện tại
+  ConsumerState<StudentAttendanceScreen> createState() => _StudentAttendanceScreenState();
+}
+
+class _StudentAttendanceScreenState extends ConsumerState<StudentAttendanceScreen> {
+  bool _isFirstLoad = true; // Biến để kiểm soát lần đầu vào trang
+
+  @override
+  void initState() {
+    super.initState();
+    // Không gọi ref ở đây nữa
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Chỉ làm mới dữ liệu khi vào trang lần đầu
+    if (_isFirstLoad) {
+      final timetable = ref.read(timetableProvider(widget.studentId)).valueOrNull ?? [];
+      final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      for (var schedule in timetable) {
+        if (today == schedule['ngay']) {
+          ref.invalidate(attendanceListProvider(schedule['timetable_id']));
+        }
+      }
+      _isFirstLoad = false; // Đánh dấu đã tải lần đầu
+    }
+  }
+
+  Future<void> _refreshData(WidgetRef ref) async {
+    // Làm mới dữ liệu cho tất cả buổi học hôm nay
+    final timetable = ref.read(timetableProvider(widget.studentId)).valueOrNull ?? [];
+    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    for (var schedule in timetable) {
+      if (schedule['ngay'] == today) {
+        ref.invalidate(attendanceListProvider(schedule['timetable_id']));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final timetableAsync = ref.watch(timetableProvider(widget.studentId));
+    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
     return Scaffold(
       appBar: AppBar(title: const Text("Điểm danh sinh viên")),
       body: timetableAsync.when(
         data: (timetable) {
-          // Lọc danh sách buổi học chỉ lấy của hôm nay
           final todayClasses = timetable.where((schedule) => schedule['ngay'] == today).toList();
 
           if (todayClasses.isEmpty) {
             return const Center(child: Text("Hôm nay không có buổi học nào."));
           }
 
-          return ListView.builder(
-            itemCount: todayClasses.length,
-            itemBuilder: (context, index) {
-              final schedule = todayClasses[index];
-              final tkbId = schedule['timetable_id']; // ID của buổi học
-              final subjectName = schedule['title']; // Tên môn học
-              final time = schedule['time'] ?? 'Không rõ giờ'; // Giả định có trường time trong timetable
-              final attendanceStatusAsync = ref.watch(attendanceListProvider(tkbId));
+          return RefreshIndicator(
+            onRefresh: () => _refreshData(ref),
+            child: ListView.builder(
+              itemCount: todayClasses.length,
+              itemBuilder: (context, index) {
+                final schedule = todayClasses[index];
+                final tkbId = schedule['timetable_id'];
+                final subjectName = schedule['title'];
+                final attendanceStatusAsync = ref.watch(attendanceListProvider(tkbId));
 
-              return Card(
-                margin: const EdgeInsets.all(8.0),
-                child: ListTile(
-                  title: Text(subjectName, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text("Ngày: ${schedule['ngay']} | Giờ: $time"),
-                  trailing: attendanceStatusAsync.when(
-                    data: (attendanceData) {
-                      final presentStudents = attendanceData["present"] as List<dynamic>? ?? [];
-                      final absentStudents = attendanceData["absent"] as List<dynamic>? ?? [];
+                return Card(
+                  margin: const EdgeInsets.all(8.0),
+                  child: ListTile(
+                    title: Text(subjectName, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: Text("Ngày: ${schedule['ngay']} - Buổi: ${schedule['buoi']}"),
+                    trailing: attendanceStatusAsync.when(
+                      data: (attendanceData) {
+                        final presentStudents = attendanceData["present"] as List<dynamic>? ?? [];
+                        final absentStudents = attendanceData["absent"] as List<dynamic>? ?? [];
+                        final isAttendanceOpen = attendanceData["is_open"] as bool? ?? false;
 
-                      // Kiểm tra xem sinh viên đã điểm danh chưa (dựa trên student_id trong object)
-                      final hasMarked = presentStudents.any((student) => student['student_id'] == studentId);
+                        final hasMarked = presentStudents.any((student) => student['student_id'] == widget.studentId);
 
-                      // Xác định trạng thái điểm danh dựa trên dữ liệu
-                      final isAttendanceOpen = presentStudents.isNotEmpty || absentStudents.isNotEmpty;
-
-                      return hasMarked
-                          ? const Text("✅ Đã điểm danh", style: TextStyle(color: Colors.green))
-                          : isAttendanceOpen
-                              ? ElevatedButton(
-                                  onPressed: () => _markAttendance(context, ref, tkbId, studentId),
-                                  style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
-                                  child: const Text("Điểm danh"),
-                                )
-                              : const Text("🚫 Điểm danh đã đóng", style: TextStyle(color: Colors.red));
-                    },
-                    loading: () => const CircularProgressIndicator(),
-                    error: (error, stack) => const Icon(Icons.error, color: Colors.red),
+                        return hasMarked
+                            ? const Text("✅ Đã điểm danh", style: TextStyle(color: Colors.green))
+                            : isAttendanceOpen
+                                ? ElevatedButton(
+                                    onPressed: () => _markAttendance(context, ref, tkbId, widget.studentId),
+                                    style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                                    child: const Text("Điểm danh"),
+                                  )
+                                : const Text("🚫 Điểm danh đã đóng", style: TextStyle(color: Colors.red));
+                      },
+                      loading: () => const CircularProgressIndicator(),
+                      error: (error, stack) => const Icon(Icons.error, color: Colors.red),
+                    ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -77,12 +115,9 @@ class StudentAttendanceScreen extends ConsumerWidget {
   void _markAttendance(BuildContext context, WidgetRef ref, int tkbId, int studentId) async {
     try {
       await ref.read(markAttendanceProvider({"tkb_id": tkbId, "student_id": studentId}).future);
-
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Điểm danh thành công!"), backgroundColor: Colors.green),
       );
-
-      // Cập nhật lại danh sách điểm danh từ server
       ref.invalidate(attendanceListProvider(tkbId));
     } catch (e) {
       String errorMessage = "Lỗi điểm danh: $e";
@@ -91,7 +126,6 @@ class StudentAttendanceScreen extends ConsumerWidget {
       } else if (e.toString().contains("network")) {
         errorMessage = "Lỗi kết nối mạng. Vui lòng kiểm tra lại!";
       }
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
       );
