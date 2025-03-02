@@ -7,15 +7,19 @@ final attendanceRepositoryProvider = Provider<AttendanceRepository>((ref) {
 });
 
 // Provider để giảng viên mở điểm danh
-final startAttendanceProvider = FutureProvider.family<void, Map<String, int>>((ref, params) async {
+final startAttendanceProvider = FutureProvider.family<String, Map<String, int>>((ref, params) async {
   final repository = ref.watch(attendanceRepositoryProvider);
-  await repository.startAttendance(params['tkb_id']!, params['duration']!);
+  return await repository.startAttendance(params['tkb_id']!, params['duration']!); // Trả về qr_data
 });
 
 // Provider để sinh viên điểm danh
-final markAttendanceProvider = FutureProvider.family<void, Map<String, int>>((ref, params) async {
+final markAttendanceProvider = FutureProvider.family<void, Map<String, dynamic>>((ref, params) async {
   final repository = ref.watch(attendanceRepositoryProvider);
-  await repository.markAttendance(params['tkb_id']!, params['student_id']!);
+  await repository.markAttendance(
+    params['tkb_id']!,
+    params['student_id']!,
+    params['qr_token']!, // Thêm qr_token
+  );
 });
 
 // Provider để giảng viên đóng điểm danh

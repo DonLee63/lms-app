@@ -5,8 +5,8 @@ import '../models/profile.dart';
 // final String base = 'http://localhost:8000/api/v1';
 // final String base = 'http://10.0.2.2:8000/api/v1';
 // final String base = 'http://192.168.88.162:8000/api/v1';
-final String base = 'http://192.168.1.20:8000/api/v1';
-final String url_image = 'http://192.168.1.20:8000/';
+final String base = 'http://192.168.1.33:8000/api/v1';
+final String url_image = 'http://192.168.1.33:8000/';
 
 //------Đăng nhập, đăng ký------//
 final String api_register = "$base/register";
