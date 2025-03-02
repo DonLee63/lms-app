@@ -12,12 +12,6 @@ class NotificationsScreen extends StatelessWidget {
         backgroundColor: Colors.blue,
         title: const Text('Thông báo'),
         centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-              Navigator.of(context).pop();  // Quay lại trang trước
-          },
-        ),
       ),
       body: const Center(
         child: Text(

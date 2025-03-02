@@ -17,22 +17,31 @@ class StudentAttendanceScreen extends ConsumerStatefulWidget {
 
 class _StudentAttendanceScreenState extends ConsumerState<StudentAttendanceScreen> {
   MobileScannerController? controller;
+  late GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey;
+
+  @override
+  void initState() {
+    super.initState();
+    _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+  }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final timetable = ref.read(timetableProvider(widget.studentId)).valueOrNull ?? [];
-    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    for (var schedule in timetable) {
-      if (today == schedule['ngay']) {
-        ref.invalidate(attendanceListProvider(schedule['timetable_id']));
+    final timetable = ref.read(timetableProvider(widget.studentId)).valueOrNull;
+    if (timetable != null) {
+      final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      for (var schedule in timetable) {
+        if (schedule['ngay'] == today && schedule['timetable_id'] != null) {
+          ref.invalidate(attendanceListProvider(schedule['timetable_id']));
+        }
       }
     }
   }
 
   Future<void> _scanQR(int tkbId) async {
     controller = MobileScannerController();
-    showModalBottomSheet(
+    await showModalBottomSheet(
       context: context,
       builder: (context) => SizedBox(
         height: 400,
@@ -46,15 +55,22 @@ class _StudentAttendanceScreenState extends ConsumerState<StudentAttendanceScree
                   for (final barcode in barcodes) {
                     if (barcode.rawValue != null) {
                       final qrData = jsonDecode(barcode.rawValue!);
-                      final scannedTkbId = qrData['tkb_id'];
-                      final qrToken = qrData['qr_token'];
+                      final scannedTkbId = qrData['tkb_id'] as int?;
+                      final qrToken = qrData['qr_token'] as String?;
+
+                      if (scannedTkbId == null || qrToken == null) {
+                        _scaffoldMessengerKey.currentState?.showSnackBar(
+                          const SnackBar(content: Text("Mã QR không hợp lệ")),
+                        );
+                        if (mounted) Navigator.pop(context);
+                        return;
+                      }
 
                       if (scannedTkbId != tkbId) {
-                        if (!mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(
+                        _scaffoldMessengerKey.currentState?.showSnackBar(
                           const SnackBar(content: Text("Mã QR không khớp với buổi học này")),
                         );
-                        Navigator.pop(context);
+                        if (mounted) Navigator.pop(context);
                         return;
                       }
 
@@ -64,18 +80,16 @@ class _StudentAttendanceScreenState extends ConsumerState<StudentAttendanceScree
                           "student_id": widget.studentId,
                           "qr_token": qrToken,
                         }).future);
-                        if (!mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(
+                        ref.invalidate(attendanceListProvider(tkbId));
+                        _scaffoldMessengerKey.currentState?.showSnackBar(
                           const SnackBar(content: Text("Điểm danh thành công!"), backgroundColor: Colors.green),
                         );
-                        ref.invalidate(attendanceListProvider(tkbId));
                       } catch (e) {
-                        if (!mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(
+                        _scaffoldMessengerKey.currentState?.showSnackBar(
                           SnackBar(content: Text("Lỗi: $e"), backgroundColor: Colors.red),
                         );
                       }
-                      Navigator.pop(context);
+                      if (mounted) Navigator.pop(context);
                       break;
                     }
                   }
@@ -104,6 +118,7 @@ class _StudentAttendanceScreenState extends ConsumerState<StudentAttendanceScree
     final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
     return Scaffold(
+      key: _scaffoldMessengerKey,
       appBar: AppBar(title: const Text("Điểm danh sinh viên")),
       body: timetableAsync.when(
         data: (timetable) {
@@ -117,8 +132,12 @@ class _StudentAttendanceScreenState extends ConsumerState<StudentAttendanceScree
             itemCount: todayClasses.length,
             itemBuilder: (context, index) {
               final schedule = todayClasses[index];
-              final tkbId = schedule['timetable_id'];
-              final subjectName = schedule['title'];
+              final tkbId = schedule['timetable_id'] as int?;
+              final subjectName = schedule['title'] as String?;
+              if (tkbId == null || subjectName == null) {
+                return const SizedBox.shrink();
+              }
+
               final attendanceStatusAsync = ref.watch(attendanceListProvider(tkbId));
 
               return Card(

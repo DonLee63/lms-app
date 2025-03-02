@@ -35,10 +35,13 @@ class _TeacherAttendanceScreenState extends ConsumerState<TeacherAttendanceScree
         presentStudents = response["present"] ?? [];
         absentStudents = response["absent"] ?? [];
         isAttendanceOpen = response["is_open"] ?? false;
+        if (isAttendanceOpen && response["qr_data"] != null) {
+          qrData = response["qr_data"];
+        }
       });
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Lỗi: $e")));
+      // Không hiển thị lỗi, để logic trong build xử lý
     }
   }
 
@@ -133,6 +136,9 @@ class _TeacherAttendanceScreenState extends ConsumerState<TeacherAttendanceScree
                 presentStudents = data["present"] ?? [];
                 absentStudents = data["absent"] ?? [];
                 isAttendanceOpen = data["is_open"] ?? false;
+                if (isAttendanceOpen && data["qr_data"] != null) {
+                  qrData = data["qr_data"];
+                }
                 return ListView(
                   children: [
                     if (presentStudents.isNotEmpty)
@@ -167,7 +173,12 @@ class _TeacherAttendanceScreenState extends ConsumerState<TeacherAttendanceScree
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stack) => Center(child: Text("Lỗi khi tải danh sách: $error")),
+              error: (error, stack) => const Center(
+                child: Text(
+                  "Chưa có phiên điểm danh nào được mở",
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                ),
+              ), // Thay thông báo lỗi bằng thông báo thân thiện
             ),
           ),
           if (isAttendanceOpen)

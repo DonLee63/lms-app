@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart'; // Thư viện xử lý ngày tháng
+import 'package:intl/intl.dart';
 import '../../providers/course_provider.dart';
 import '../TeacherPage/teacher_attendance_screen.dart';
 
@@ -87,11 +87,12 @@ class _CourseClassScreenState extends ConsumerState<CourseClassScreen> {
           final today = DateFormat('yyyy-MM-dd').format(now);
           final currentSession = now.hour >= 12 ? "Chiều" : "Sáng";
 
-          // Chỉ lọc theo ngày và buổi (bỏ lọc theo môn học)
+          // Lọc thời khóa biểu theo ngày, buổi và phancong_id
           final filteredSchedule = schedules.firstWhere(
             (schedule) =>
                 schedule["ngay"] == today &&
-                schedule["buoi"] == currentSession,
+                schedule["buoi"] == currentSession &&
+                schedule["phancong_id"] == widget.phancongId, // Kiểm tra phancong_id
             orElse: () => null,
           );
 
@@ -107,12 +108,12 @@ class _CourseClassScreenState extends ConsumerState<CourseClassScreen> {
                             context,
                             MaterialPageRoute(
                               builder: (context) => TeacherAttendanceScreen(
-                                tkbId: filteredSchedule["timetable_id"], // Sử dụng timetable_id từ JSON
+                                tkbId: filteredSchedule["timetable_id"],
                               ),
                             ),
                           );
                         }
-                      : null, // Nếu không có thời khóa biểu phù hợp thì disable
+                      : null,
                   label: const Text("Điểm danh"),
                   icon: const Icon(Icons.check_circle, color: Colors.white),
                   backgroundColor: filteredSchedule != null ? Colors.pink : Colors.grey,

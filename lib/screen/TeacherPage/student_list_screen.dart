@@ -17,6 +17,7 @@ class _StudentListScreenState extends ConsumerState<StudentListScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     // Làm mới danh sách sinh viên khi vào màn hình
+    // ignore: unused_result
     ref.refresh(classStudentsProvider(widget.teacherId));
   }
 
