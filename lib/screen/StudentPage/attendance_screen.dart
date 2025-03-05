@@ -16,7 +16,6 @@ class StudentAttendanceScreen extends ConsumerStatefulWidget {
 }
 
 class _StudentAttendanceScreenState extends ConsumerState<StudentAttendanceScreen> {
-  MobileScannerController? controller;
   late GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey;
 
   @override
@@ -39,77 +38,21 @@ class _StudentAttendanceScreenState extends ConsumerState<StudentAttendanceScree
     }
   }
 
-  Future<void> _scanQR(int tkbId) async {
-    controller = MobileScannerController();
-    await showModalBottomSheet(
-      context: context,
-      builder: (context) => SizedBox(
-        height: 400,
-        child: Column(
-          children: [
-            Expanded(
-              child: MobileScanner(
-                controller: controller,
-                onDetect: (capture) async {
-                  final List<Barcode> barcodes = capture.barcodes;
-                  for (final barcode in barcodes) {
-                    if (barcode.rawValue != null) {
-                      final qrData = jsonDecode(barcode.rawValue!);
-                      final scannedTkbId = qrData['tkb_id'] as int?;
-                      final qrToken = qrData['qr_token'] as String?;
-
-                      if (scannedTkbId == null || qrToken == null) {
-                        _scaffoldMessengerKey.currentState?.showSnackBar(
-                          const SnackBar(content: Text("Mã QR không hợp lệ")),
-                        );
-                        if (mounted) Navigator.pop(context);
-                        return;
-                      }
-
-                      if (scannedTkbId != tkbId) {
-                        _scaffoldMessengerKey.currentState?.showSnackBar(
-                          const SnackBar(content: Text("Mã QR không khớp với buổi học này")),
-                        );
-                        if (mounted) Navigator.pop(context);
-                        return;
-                      }
-
-                      try {
-                        await ref.read(markAttendanceProvider({
-                          "tkb_id": tkbId,
-                          "student_id": widget.studentId,
-                          "qr_token": qrToken,
-                        }).future);
-                        ref.invalidate(attendanceListProvider(tkbId));
-                        _scaffoldMessengerKey.currentState?.showSnackBar(
-                          const SnackBar(content: Text("Điểm danh thành công!"), backgroundColor: Colors.green),
-                        );
-                      } catch (e) {
-                        _scaffoldMessengerKey.currentState?.showSnackBar(
-                          SnackBar(content: Text("Lỗi: $e"), backgroundColor: Colors.red),
-                        );
-                      }
-                      if (mounted) Navigator.pop(context);
-                      break;
-                    }
-                  }
-                },
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: ElevatedButton(
-                onPressed: () {
-                  controller?.stop();
-                  Navigator.pop(context);
-                },
-                child: const Text("Hủy"),
-              ),
-            ),
-          ],
+  void _scanQR(int tkbId) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => QRScannerScreen(
+          tkbId: tkbId,
+          studentId: widget.studentId,
+          onScanComplete: (success) {
+            if (success) {
+              ref.invalidate(attendanceListProvider(tkbId));
+            }
+          },
         ),
       ),
-    ).whenComplete(() => controller?.start());
+    );
   }
 
   @override
@@ -177,7 +120,118 @@ class _StudentAttendanceScreenState extends ConsumerState<StudentAttendanceScree
 
   @override
   void dispose() {
-    controller?.dispose();
+    super.dispose();
+  }
+}
+
+// Trang quét QR riêng
+class QRScannerScreen extends ConsumerStatefulWidget {
+  final int tkbId;
+  final int studentId;
+  final Function(bool) onScanComplete;
+
+  const QRScannerScreen({
+    super.key,
+    required this.tkbId,
+    required this.studentId,
+    required this.onScanComplete,
+  });
+
+  @override
+  ConsumerState<QRScannerScreen> createState() => _QRScannerScreenState();
+}
+
+class _QRScannerScreenState extends ConsumerState<QRScannerScreen> {
+  late MobileScannerController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = MobileScannerController();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Quét mã QR để điểm danh"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: () async {
+              await controller.stop();
+              Navigator.pop(context);
+            },
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: MobileScanner(
+              controller: controller,
+              onDetect: (capture) async {
+                final List<Barcode> barcodes = capture.barcodes;
+                for (final barcode in barcodes) {
+                  if (barcode.rawValue != null) {
+                    final qrData = jsonDecode(barcode.rawValue!);
+                    final scannedTkbId = qrData['tkb_id'] as int?;
+                    final qrToken = qrData['qr_token'] as String?;
+
+                    if (scannedTkbId == null || qrToken == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Mã QR không hợp lệ")),
+                      );
+                      await controller.stop();
+                      Navigator.pop(context);
+                      widget.onScanComplete(false);
+                      return;
+                    }
+
+                    if (scannedTkbId != widget.tkbId) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Mã QR không khớp với buổi học này")),
+                      );
+                      await controller.stop();
+                      Navigator.pop(context);
+                      widget.onScanComplete(false);
+                      return;
+                    }
+
+                    try {
+                      await ref.read(markAttendanceProvider({
+                        "tkb_id": widget.tkbId,
+                        "student_id": widget.studentId,
+                        "qr_token": qrToken,
+                      }).future);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Điểm danh thành công!"), backgroundColor: Colors.green),
+                      );
+                      await controller.stop();
+                      Navigator.pop(context);
+                      widget.onScanComplete(true);
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Lỗi: $e"), backgroundColor: Colors.red),
+                      );
+                      await controller.stop();
+                      Navigator.pop(context);
+                      widget.onScanComplete(false);
+                    }
+                    break;
+                  }
+                }
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
     super.dispose();
   }
 }

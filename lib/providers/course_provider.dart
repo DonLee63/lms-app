@@ -73,9 +73,7 @@ final examScheduleProvider = FutureProvider.family<List<Map<String, dynamic>>, i
 });
 
 
-final studentsByTeacherProvider = FutureProvider
-    .family<List<Map<String, dynamic>>, Map<String, int>>((ref, params) async {
-  // Remove ref.keepAlive() as it's causing the infinite loop
+final studentsByTeacherProvider = FutureProvider.family<List<Map<String, dynamic>>, Map<String, int>>((ref, params) async {
   final repository = ref.watch(courseRepositoryProvider);
   return repository.getStudentsByTeacher(params['teacher_id']!, params['phancong_id']!);
 });

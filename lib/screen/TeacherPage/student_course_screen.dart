@@ -19,6 +19,7 @@ class _StudentCoursesScreenState extends ConsumerState<StudentCoursesScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     // Làm mới dữ liệu mỗi khi vào màn hình
+    // ignore: unused_result
     ref.refresh(enrolledCoursesProvider(widget.studentId));
   }
 

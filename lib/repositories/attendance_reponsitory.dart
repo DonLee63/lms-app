@@ -81,46 +81,47 @@ class AttendanceRepository {
   }
 
   Future<Map<String, dynamic>> getAttendanceList(int tkbId) async {
-    final url = Uri.parse("$base/getAttendanceBySchedule?tkb_id=$tkbId");
+  final url = Uri.parse("$base/getAttendanceBySchedule?tkb_id=$tkbId");
 
-    final response = await http.get(
-      url,
-      headers: {"Content-Type": "application/json"},
-    );
+  final response = await http.get(
+    url,
+    headers: {"Content-Type": "application/json"},
+  );
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      if (data['success'] == true) {
-        final studentList = data['data']['student_list'] as List<dynamic>;
-        final presentList = studentList
-            .where((student) => student['status'] == 'present')
-            .map((student) => {
-                  'student_id': student['student_id'],
-                  'mssv': student['mssv'],
-                  'full_name': student['full_name'],
-                })
-            .toList();
-        final absentList = studentList
-            .where((student) => student['status'] == 'absent')
-            .map((student) => {
-                  'student_id': student['student_id'],
-                  'mssv': student['mssv'],
-                  'full_name': student['full_name'],
-                })
-            .toList();
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+    if (data['success'] == true) {
+      final studentList = data['data']['student_list'] as List<dynamic>;
+      final presentList = studentList
+          .where((student) => student['status'] == 'present')
+          .map((student) => {
+                'student_id': student['student_id'],
+                'mssv': student['mssv'],
+                'full_name': student['full_name'],
+              })
+          .toList();
+      final absentList = studentList
+          .where((student) => student['status'] == 'absent')
+          .map((student) => {
+                'student_id': student['student_id'],
+                'mssv': student['mssv'],
+                'full_name': student['full_name'],
+              })
+          .toList();
 
-        return {
-          "present": presentList,
-          "absent": absentList,
-          "is_open": data['data']['is_open'] ?? false,
-        };
-      } else {
-        throw Exception("API trả về thất bại: ${data['message']}");
-      }
+      return {
+        "present": presentList,
+        "absent": absentList,
+        "is_open": data['data']['is_open'] ?? false,
+        "qr_data": data['data']['qr_data'], // Thêm qr_data vào dữ liệu trả về
+      };
     } else {
-      print("${response.body}");
-      print("${response.statusCode}");
-      throw Exception("Lỗi khi lấy danh sách điểm danh: ${response.body}");
+      throw Exception("API trả về thất bại: ${data['message']}");
     }
+  } else {
+    print("${response.body}");
+    print("${response.statusCode}");
+    throw Exception("Lỗi khi lấy danh sách điểm danh: ${response.body}");
   }
+}
 }

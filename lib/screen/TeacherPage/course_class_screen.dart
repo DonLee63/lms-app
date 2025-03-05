@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:study_management_app/screen/TeacherPage/teacherquizscreen.dart';
 import '../../providers/course_provider.dart';
 import '../TeacherPage/teacher_attendance_screen.dart';
 
 class CourseClassScreen extends ConsumerStatefulWidget {
   final int teacherId;
-  final int phancongId; // Giữ nguyên phancongId
+  final int phancongId;
 
   const CourseClassScreen({
     super.key,
@@ -19,16 +20,28 @@ class CourseClassScreen extends ConsumerStatefulWidget {
 }
 
 class _CourseClassScreenState extends ConsumerState<CourseClassScreen> {
-  late final Future<List<Map<String, dynamic>>> studentsFuture;
-  bool isExpanded = false; // Trạng thái mở rộng nút
+  late Future<List<Map<String, dynamic>>> studentsFuture;
+  bool isExpanded = false;
 
   @override
   void initState() {
     super.initState();
+    _loadStudents();
+  }
+
+  Future<void> _loadStudents() async {
     studentsFuture = ref.read(courseRepositoryProvider).getStudentsByTeacher(
           widget.teacherId,
           widget.phancongId,
         );
+  }
+
+  Future<void> _refresh() async {
+    setState(() {
+      _loadStudents();
+    });
+    ref.invalidate(teacherScheduleProvider(widget.teacherId));
+    await studentsFuture;
   }
 
   @override
@@ -37,62 +50,92 @@ class _CourseClassScreenState extends ConsumerState<CourseClassScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text("Danh sách sinh viên")),
-      body: FutureBuilder<List<Map<String, dynamic>>>(
-        future: studentsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: RefreshIndicator(
+        onRefresh: _refresh,
+        child: FutureBuilder<List<Map<String, dynamic>>>(
+          future: studentsFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-          if (snapshot.hasError) {
-            return Center(child: Text("Lỗi: ${snapshot.error.toString()}"));
-          }
+            if (snapshot.hasError) {
+              return Center(child: Text("Lỗi: ${snapshot.error.toString()}"));
+            }
 
-          final students = snapshot.data ?? [];
-          if (students.isEmpty) {
-            return const Center(child: Text("Không có sinh viên nào."));
-          }
+            final students = snapshot.data ?? [];
+            if (students.isEmpty) {
+              return const Center(child: Text("Không có sinh viên nào."));
+            }
 
-          return ListView.separated(
-            itemCount: students.length,
-            separatorBuilder: (context, index) => const Divider(),
-            itemBuilder: (context, index) {
-              final student = students[index];
-              return ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: Colors.blueAccent,
-                  child: Text(
-                    student["student_name"].substring(0, 1).toUpperCase(),
-                    style: const TextStyle(color: Colors.white),
+            // Lấy hocphan_id từ danh sách sinh viên (giả sử tất cả sinh viên cùng hocphan_id)
+            final hocphanId = students.isNotEmpty && students[0]["hocphan_id"] != null
+                ? students[0]["hocphan_id"] as int
+                : null;
+
+            return ListView.separated(
+              physics: const AlwaysScrollableScrollPhysics(),
+              itemCount: students.length,
+              separatorBuilder: (context, index) => const Divider(),
+              itemBuilder: (context, index) {
+                final student = students[index];
+                final absentCount = student["absent_count"] as int? ?? 0;
+
+                Color avatarColor;
+                if (absentCount >= 3) {
+                  avatarColor = Colors.red;
+                } else if (absentCount == 2) {
+                  avatarColor = Colors.orange;
+                } else if (absentCount == 1) {
+                  avatarColor = Colors.yellow;
+                } else {
+                  avatarColor = Colors.blueAccent;
+                }
+
+                return ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: avatarColor,
+                    child: Text(
+                      student["student_name"].substring(0, 1).toUpperCase(),
+                      style: const TextStyle(color: Colors.white),
+                    ),
                   ),
-                ),
-                title: Text(student["student_name"]),
-                subtitle: Text("${student["subject"]} - ${student["class_name"]}"),
-                trailing: IconButton(
-                  icon: const Icon(Icons.email, color: Colors.blue),
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Email: ${student["student_email"]}")),
-                    );
-                  },
-                ),
-              );
-            },
-          );
-        },
+                  title: Text(student["student_name"]),
+                  subtitle: Text("${student["subject"]} - ${student["class_name"]} - Vắng: $absentCount"),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.email, color: Colors.blue),
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Email: ${student["student_email"]}")),
+                      );
+                    },
+                  ),
+                );
+              },
+            );
+          },
+        ),
       ),
       floatingActionButton: teacherScheduleAsync.when(
         data: (schedules) {
           final now = DateTime.now();
           final today = DateFormat('yyyy-MM-dd').format(now);
-          final currentSession = now.hour >= 12 ? "Chiều" : "Sáng";
+          String currentSession;
 
-          // Lọc thời khóa biểu theo ngày, buổi và phancong_id
+          if (now.hour < 12) {
+            currentSession = "Sáng";
+          } else if (now.hour < 18) {
+            currentSession = "Chiều";
+          } else {
+            currentSession = "Tối";
+          }
+
+          // Lọc lịch dạy hôm nay cho điểm danh
           final filteredSchedule = schedules.firstWhere(
             (schedule) =>
                 schedule["ngay"] == today &&
                 schedule["buoi"] == currentSession &&
-                schedule["phancong_id"] == widget.phancongId, // Kiểm tra phancong_id
+                schedule["phancong_id"] == widget.phancongId,
             orElse: () => null,
           );
 
@@ -119,14 +162,36 @@ class _CourseClassScreenState extends ConsumerState<CourseClassScreen> {
                   backgroundColor: filteredSchedule != null ? Colors.pink : Colors.grey,
                 ),
                 const SizedBox(height: 10),
-                FloatingActionButton.extended(
-                  heroTag: "assignment",
-                  onPressed: () {
-                    // TODO: Thêm chức năng bài tập
+                FutureBuilder<List<Map<String, dynamic>>>(
+                  future: studentsFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const SizedBox.shrink(); // Không hiển thị gì khi đang tải
+                    }
+                    final students = snapshot.data ?? [];
+                    final hocphanId = students.isNotEmpty && students[0]["hocphan_id"] != null
+                        ? students[0]["hocphan_id"] as int
+                        : null;
+
+                    return FloatingActionButton.extended(
+                      heroTag: "assignment",
+                      onPressed: hocphanId != null
+                          ? () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => TeacherQuizScreen(
+                                    hocphanId: hocphanId,
+                                  ),
+                                ),
+                              );
+                            }
+                          : null, // Vô hiệu hóa nếu không có hocphan_id
+                      label: const Text("Bài tập"),
+                      icon: const Icon(Icons.assignment, color: Colors.white),
+                      backgroundColor: hocphanId != null ? Colors.pink : Colors.grey,
+                    );
                   },
-                  label: const Text("Bài tập"),
-                  icon: const Icon(Icons.assignment, color: Colors.white),
-                  backgroundColor: Colors.pink,
                 ),
                 const SizedBox(height: 10),
               ],

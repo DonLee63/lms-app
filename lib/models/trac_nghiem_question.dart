@@ -1,93 +1,94 @@
-class Question {
-  final int id;
+import 'dart:convert';
+
+class TracNghiemCauhoi {
+  final int? id;
   final String content;
   final int hocphanId;
-  final Map<String, dynamic>? resources;
+  final List<int>? resources;
   final int loaiId;
   final int userId;
+  final List<TracNghiemDapan>? answers;
 
-  Question({
-    required this.id,
+  TracNghiemCauhoi({
+    this.id,
     required this.content,
     required this.hocphanId,
     this.resources,
     required this.loaiId,
     required this.userId,
+    this.answers,
   });
 
-  factory Question.fromJson(Map<String, dynamic> json) {
-    return Question(
-      id: json['id'],
-      content: json['content'],
-      hocphanId: json['hocphan_id'],
-      resources: json['resources'] != null ? Map<String, dynamic>.from(json['resources']) : null,
-      loaiId: json['loai_id'],
-      userId: json['user_id'],
-    );
-  }
+  Map<String, dynamic> toJson() => {
+        'content': content,
+        'hocphan_id': hocphanId,
+        'resources': resources,
+        'loai_id': loaiId,
+        'user_id': userId,
+      };
 
-  Map<String, dynamic> toJson() {
-    return {
-      'content': content,
-      'hocphan_id': hocphanId,
-      'resources': resources,
-      'loai_id': loaiId,
-      'user_id': userId,
-    };
-  }
+  factory TracNghiemCauhoi.fromJson(Map<String, dynamic> json) => TracNghiemCauhoi(
+        id: json['id'],
+        content: json['content'],
+        hocphanId: json['hocphan_id'],
+        resources: json['resources'] != null ? List<int>.from(jsonDecode(json['resources'])) : null,
+        loaiId: json['loai_id'],
+        userId: json['user_id'] ?? 0, // Giả định user_id luôn có từ API
+        answers: json['answers'] != null
+            ? (json['answers'] as List).map((item) => TracNghiemDapan.fromJson(item)).toList()
+            : null,
+      );
 }
 
-class Answer {
-  final int id;
+class TracNghiemDapan {
+  final int? id;
   final int tracnghiemId;
   final String content;
-  final String? resounceList;
+  final List<int>? resounceList;
   final bool isCorrect;
 
-  Answer({
-    required this.id,
+  TracNghiemDapan({
+    this.id,
     required this.tracnghiemId,
     required this.content,
     this.resounceList,
     required this.isCorrect,
   });
 
-  factory Answer.fromJson(Map<String, dynamic> json) {
-    return Answer(
-      id: json['id'],
-      tracnghiemId: json['tracnghiem_id'],
-      content: json['content'],
-      resounceList: json['resounce_list'],
-      isCorrect: json['is_correct'],
-    );
-  }
+  Map<String, dynamic> toJson() => {
+        'tracnghiem_id': tracnghiemId,
+        'content': content,
+        'resounce_list': resounceList,
+        'is_correct': isCorrect,
+      };
 
-  Map<String, dynamic> toJson() {
-    return {
-      'tracnghiem_id': tracnghiemId,
-      'content': content,
-      'resounce_list': resounceList,
-      'is_correct': isCorrect,
-    };
-  }
+  factory TracNghiemDapan.fromJson(Map<String, dynamic> json) => TracNghiemDapan(
+        id: json['id'],
+        tracnghiemId: json['tracnghiem_id'],
+        content: json['content'],
+        resounceList: json['resounce_list'] != null ? List<int>.from(jsonDecode(json['resounce_list'])) : null,
+        isCorrect: json['is_correct'],
+      );
 }
 
-class Quiz {
-  final int id;
+class BodeTracNghiem {
+  final int? id;
   final String title;
   final int hocphanId;
-  final String startTime;
-  final String endTime;
+  final String slug;
+  final DateTime startTime;
+  final DateTime endTime;
   final int time;
   final String? tags;
   final int userId;
   final int totalPoints;
   final List<Map<String, dynamic>> questions;
 
-  Quiz({
-    required this.id,
+  BodeTracNghiem({
+    this.id,
     required this.title,
     required this.hocphanId,
+    required this.slug,
     required this.startTime,
     required this.endTime,
     required this.time,
@@ -97,32 +98,29 @@ class Quiz {
     required this.questions,
   });
 
-  factory Quiz.fromJson(Map<String, dynamic> json) {
-    return Quiz(
-      id: json['id'],
-      title: json['title'],
-      hocphanId: json['hocphan_id'],
-      startTime: json['start_time'],
-      endTime: json['end_time'],
-      time: json['time'],
-      tags: json['tags'],
-      userId: json['user_id'],
-      totalPoints: json['total_points'],
-      questions: List<Map<String, dynamic>>.from(json['questions']),
-    );
-  }
+  Map<String, dynamic> toJson() => {
+        'title': title,
+        'hocphan_id': hocphanId,
+        'start_time': startTime.toIso8601String(),
+        'end_time': endTime.toIso8601String(),
+        'time': time,
+        'tags': tags,
+        'total_points': totalPoints,
+        'questions': questions,
+        'user_id': userId,
+      };
 
-  Map<String, dynamic> toJson() {
-    return {
-      'title': title,
-      'hocphan_id': hocphanId,
-      'start_time': startTime,
-      'end_time': endTime,
-      'time': time,
-      'tags': tags,
-      'user_id': userId,
-      'total_points': totalPoints,
-      'questions': questions,
-    };
-  }
+  factory BodeTracNghiem.fromJson(Map<String, dynamic> json) => BodeTracNghiem(
+        id: json['id'],
+        title: json['title'],
+        hocphanId: json['hocphan_id'],
+        slug: json['slug'],
+        startTime: DateTime.parse(json['start_time']),
+        endTime: DateTime.parse(json['end_time']),
+        time: json['time'],
+        tags: json['tags'],
+        userId: json['user_id'] ?? 0,
+        totalPoints: json['total_points'],
+        questions: List<Map<String, dynamic>>.from(jsonDecode(json['questions'])),
+      );
 }

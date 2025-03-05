@@ -35,7 +35,8 @@ class _TeacherAttendanceScreenState extends ConsumerState<TeacherAttendanceScree
         presentStudents = response["present"] ?? [];
         absentStudents = response["absent"] ?? [];
         isAttendanceOpen = response["is_open"] ?? false;
-        if (isAttendanceOpen && response["qr_data"] != null) {
+        // Chỉ cập nhật qrData từ server nếu chưa có giá trị từ startAttendance
+        if (qrData == null && response["qr_data"] != null) {
           qrData = response["qr_data"];
         }
       });
@@ -84,7 +85,9 @@ class _TeacherAttendanceScreenState extends ConsumerState<TeacherAttendanceScree
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final attendanceListAsync = ref.watch(attendanceListProvider(widget.tkbId));
+
     return Scaffold(
       appBar: AppBar(title: const Text("Quản lý điểm danh")),
       body: Column(
@@ -125,6 +128,8 @@ class _TeacherAttendanceScreenState extends ConsumerState<TeacherAttendanceScree
                     data: qrData!,
                     version: QrVersions.auto,
                     size: 200.0,
+                    foregroundColor: isDarkMode ? Colors.white : Colors.black,
+                    backgroundColor: isDarkMode ? Colors.black : Colors.white,
                   ),
                 ],
               ),
@@ -136,9 +141,7 @@ class _TeacherAttendanceScreenState extends ConsumerState<TeacherAttendanceScree
                 presentStudents = data["present"] ?? [];
                 absentStudents = data["absent"] ?? [];
                 isAttendanceOpen = data["is_open"] ?? false;
-                if (isAttendanceOpen && data["qr_data"] != null) {
-                  qrData = data["qr_data"];
-                }
+                // Không ghi đè qrData từ server, giữ giá trị từ startAttendance
                 return ListView(
                   children: [
                     if (presentStudents.isNotEmpty)
@@ -178,7 +181,7 @@ class _TeacherAttendanceScreenState extends ConsumerState<TeacherAttendanceScree
                   "Chưa có phiên điểm danh nào được mở",
                   style: TextStyle(fontSize: 16, color: Colors.grey),
                 ),
-              ), // Thay thông báo lỗi bằng thông báo thân thiện
+              ),
             ),
           ),
           if (isAttendanceOpen)
