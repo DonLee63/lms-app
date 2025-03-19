@@ -144,7 +144,7 @@ class _HomeScreen extends ConsumerState<HomeScreen> {
                   _buildCategoryButton('Bài tập', Icons.class_, () {
                     if (_teacherId != null) {
                       // Điều hướng đến màn hình đăng ký học phần và truyền studentId
-                     Navigator.of(context).pushNamed(AppRoutes.studentExercises);
+                     Navigator.of(context).pushNamed(AppRoutes.studentExercises, arguments: _studentId);
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Không tìm thấy student_id')),

@@ -124,3 +124,17 @@ class BodeTracNghiem {
         questions: List<Map<String, dynamic>>.from(jsonDecode(json['questions'])),
       );
 }
+
+class TracNghiemLoai {
+  final int id;
+  final String title;
+
+  TracNghiemLoai({required this.id, required this.title});
+
+  factory TracNghiemLoai.fromJson(Map<String, dynamic> json) {
+    return TracNghiemLoai(
+      id: json['id'],
+      title: json['title'],
+    );
+  }
+}

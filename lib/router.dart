@@ -75,7 +75,14 @@ class AppRoutes {
     teacherscreen: (context) => TeacherScreen(),
     editprofile: (context) => const EditProfileScreen(),
     studentSurvey: (context) => const StudentSurveyScreen(),
-    studentExercises: (context) => const StudentExercisesScreen(),
+    studentExercises:(context) {
+      if (ModalRoute.of(context)!.settings.arguments != null) {
+        final studentId = ModalRoute.of(context)!.settings.arguments as int;
+        return StudentExercisesScreen(studentId: studentId);
+      } else {
+        return const HomeScreen();
+      }
+    },
     courseClass: (context) {
     final args = ModalRoute.of(context)!.settings.arguments;
     if (args != null && args is Map<String, int>) {

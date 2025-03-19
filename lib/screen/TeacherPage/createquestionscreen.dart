@@ -17,9 +17,9 @@ class CreateQuestionScreen extends ConsumerStatefulWidget {
 class _CreateQuestionScreenState extends ConsumerState<CreateQuestionScreen> {
   final _formKey = GlobalKey<FormState>();
   final _contentController = TextEditingController();
-  final _loaiIdController = TextEditingController();
   List<Map<String, dynamic>> _answers = [];
   int? _userId;
+  TracNghiemLoai? _selectedQuestionType; // Biến để lưu loại câu hỏi được chọn
 
   @override
   void initState() {
@@ -30,15 +30,14 @@ class _CreateQuestionScreenState extends ConsumerState<CreateQuestionScreen> {
   Future<void> _loadUserId() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _userId = prefs.getInt('userId') ?? 1; // Thống nhất key 'user_id', mặc định 1 nếu null
-      print("User ID loaded: $_userId");
+      _userId = prefs.getInt('userId') ?? 1;
+      print("User ID: $_userId");
     });
   }
 
   @override
   void dispose() {
     _contentController.dispose();
-    _loaiIdController.dispose();
     super.dispose();
   }
 
@@ -49,16 +48,15 @@ class _CreateQuestionScreenState extends ConsumerState<CreateQuestionScreen> {
   }
 
   Future<void> _submitQuestion() async {
-    if (_formKey.currentState!.validate() && _answers.length >= 2) {
+    if (_formKey.currentState!.validate() && _answers.length >= 2 && _selectedQuestionType != null) {
       final question = TracNghiemCauhoi(
         content: _contentController.text,
         hocphanId: widget.hocphanId,
-        loaiId: int.parse(_loaiIdController.text),
-        userId: _userId!, // Lấy từ SharedPreferences
+        loaiId: _selectedQuestionType!.id, // Lấy ID từ loại câu hỏi được chọn
+        userId: _userId!,
       );
 
       try {
-        print("Submitting question: ${question.toJson()}");
         final createdQuestion = await ref.read(createQuestionProvider(question).future);
         if (createdQuestion != null) {
           for (var answer in _answers) {
@@ -81,13 +79,15 @@ class _CreateQuestionScreenState extends ConsumerState<CreateQuestionScreen> {
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Vui lòng thêm ít nhất 2 đáp án")),
+        const SnackBar(content: Text("Vui lòng thêm ít nhất 2 đáp án và chọn loại câu hỏi")),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final questionTypesAsync = ref.watch(questionTypesProvider);
+
     return Scaffold(
       appBar: AppBar(title: const Text("Tạo câu hỏi trắc nghiệm")),
       body: Padding(
@@ -104,11 +104,25 @@ class _CreateQuestionScreenState extends ConsumerState<CreateQuestionScreen> {
                   validator: (value) => value!.isEmpty ? "Vui lòng nhập nội dung" : null,
                 ),
                 const SizedBox(height: 16),
-                TextFormField(
-                  controller: _loaiIdController,
-                  decoration: const InputDecoration(labelText: "Loại câu hỏi (ID)"),
-                  keyboardType: TextInputType.number,
-                  validator: (value) => value!.isEmpty ? "Vui lòng nhập ID loại" : null,
+                questionTypesAsync.when(
+                  data: (types) => DropdownButtonFormField<TracNghiemLoai>(
+                    decoration: const InputDecoration(labelText: "Loại câu hỏi"),
+                    value: _selectedQuestionType,
+                    items: types.map((type) {
+                      return DropdownMenuItem<TracNghiemLoai>(
+                        value: type,
+                        child: Text(type.title),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedQuestionType = value;
+                      });
+                    },
+                    validator: (value) => value == null ? "Vui lòng chọn loại câu hỏi" : null,
+                  ),
+                  loading: () => const CircularProgressIndicator(),
+                  error: (e, _) => Text("Lỗi: $e"),
                 ),
                 const SizedBox(height: 16),
                 const Text("Đáp án:", style: TextStyle(fontWeight: FontWeight.bold)),
