@@ -8,7 +8,7 @@ class Quiz {
   final DateTime startTime;
   final DateTime endTime;
   final int time;
-  final String type; // 'trac_nghiem' hoặc 'tu_luan'
+  final String type;
 
   Quiz({
     required this.id,
@@ -45,36 +45,70 @@ class Quiz {
 }
 
 class Assignment {
-  final int? id;
-  final int quizId;
-  final String quizType;
-  final int hocphanId; // Thay studentId bằng hocphanId
-  final DateTime assignedAt;
-  final DateTime dueDate;
+  final int? assignmentId;
+  final int? quizId;
+  final String? quizType;
+  final int? hocphanId;
+  final String? title;
+  final int? totalPoints;
+  final int? time;
+  final DateTime? assignedAt;
+  final DateTime? dueDate;
 
   Assignment({
-    this.id,
-    required this.quizId,
-    required this.quizType,
-    required this.hocphanId,
-    required this.assignedAt,
-    required this.dueDate,
+    this.assignmentId,
+    this.quizId,
+    this.quizType,
+    this.hocphanId,
+    this.title,
+    this.totalPoints,
+    this.time,
+    this.assignedAt,
+    this.dueDate,
   });
 
   factory Assignment.fromJson(Map<String, dynamic> json) => Assignment(
-        id: json['id'] as int?,
-        quizId: json['quiz_id'] as int,
-        quizType: json['quiz_type'] as String,
-        hocphanId: json['hocphan_id'] as int,
-        assignedAt: DateTime.parse(json['assigned_at'] as String),
-        dueDate: DateTime.parse(json['due_date'] as String),
+        assignmentId: json['assignment_id'] as int?,
+        quizId: json['quiz_id'] as int?,
+        quizType: json['quiz_type'] as String?,
+        hocphanId: json['hocphan_id'] as int?,
+        title: json['title'] as String?,
+        totalPoints: json['total_points'] as int?,
+        time: json['time'] as int?,
+        assignedAt: json['assigned_at'] != null ? DateTime.parse(json['assigned_at'] as String) : null,
+        dueDate: json['due_date'] != null ? DateTime.parse(json['due_date'] as String) : null,
       );
 
   Map<String, dynamic> toJson() => {
         'quiz_id': quizId,
         'quiz_type': quizType,
-        'due_date': dueDate.toIso8601String(),
+        'hocphan_id': hocphanId,
+        'title': title,
+        'total_points': totalPoints,
+        'time': time,
+        'assigned_at': assignedAt?.toIso8601String(),
+        'due_date': dueDate?.toIso8601String(),
       };
+}
+
+class HocphanAssignments {
+  final int hocphanId;
+  final String hocphanName; // Thêm trường hocphanName
+  final List<StudentAssignment> assignments;
+
+  HocphanAssignments({
+    required this.hocphanId,
+    required this.hocphanName,
+    required this.assignments,
+  });
+
+  factory HocphanAssignments.fromJson(Map<String, dynamic> json) => HocphanAssignments(
+        hocphanId: json['hocphan_id'] as int,
+        hocphanName: json['hocphan_name'] as String? ?? 'Không xác định', // Parse hocphan_name
+        assignments: (json['assignments'] as List)
+            .map((item) => StudentAssignment.fromJson(item))
+            .toList(),
+      );
 }
 
 class StudentAssignment {
@@ -84,6 +118,8 @@ class StudentAssignment {
   final String title;
   final int totalPoints;
   final int time;
+  final DateTime? startTime;
+  final DateTime? endTime;
   final DateTime dueDate;
 
   StudentAssignment({
@@ -93,6 +129,8 @@ class StudentAssignment {
     required this.title,
     required this.totalPoints,
     required this.time,
+    this.startTime,
+    this.endTime,
     required this.dueDate,
   });
 
@@ -103,23 +141,68 @@ class StudentAssignment {
         title: json['title'] as String,
         totalPoints: json['total_points'] as int,
         time: json['time'] as int,
+        startTime: json['start_time'] != null ? DateTime.parse(json['start_time'] as String) : null,
+        endTime: json['end_time'] != null ? DateTime.parse(json['end_time'] as String) : null,
         dueDate: DateTime.parse(json['due_date'] as String),
       );
 }
 
-class HocphanAssignments {
-  final int hocphanId;
-  final List<StudentAssignment> assignments;
+class QuizQuestion {
+  final int id;
+  final String content;
+  final List<QuizAnswer>? answers;
 
-  HocphanAssignments({
-    required this.hocphanId,
-    required this.assignments,
+  QuizQuestion({required this.id, required this.content, this.answers});
+
+  factory QuizQuestion.fromJson(Map<String, dynamic> json) {
+    return QuizQuestion(
+      id: json['id'] as int,
+      content: json['content'] as String,
+      answers: json['answers'] != null
+          ? (json['answers'] as List).map((a) => QuizAnswer.fromJson(a)).toList()
+          : null,
+    );
+  }
+}
+
+class QuizAnswer {
+  final int id;
+  final String content;
+  final bool isCorrect;
+
+  QuizAnswer({required this.id, required this.content, required this.isCorrect});
+
+  factory QuizAnswer.fromJson(Map<String, dynamic> json) {
+    return QuizAnswer(
+      id: json['id'] as int,
+      content: json['content'] as String,
+      isCorrect: json['is_correct'] == 1,
+    );
+  }
+}
+
+class Submission {
+  final int submissionId;
+  final int studentId;
+  final String studentName;
+  final String? submittedAt;
+  final dynamic score;
+
+  Submission({
+    required this.submissionId,
+    required this.studentId,
+    required this.studentName,
+    this.submittedAt,
+    required this.score,
   });
 
-  factory HocphanAssignments.fromJson(Map<String, dynamic> json) => HocphanAssignments(
-        hocphanId: json['hocphan_id'] as int,
-        assignments: (json['assignments'] as List)
-            .map((item) => StudentAssignment.fromJson(item))
-            .toList(),
-      );
+  factory Submission.fromJson(Map<String, dynamic> json) {
+    return Submission(
+      submissionId: json['submission_id'] as int,
+      studentId: json['student_id'] as int,
+      studentName: json['student_name'] as String,
+      submittedAt: json['submitted_at'] as String?,
+      score: json['score'],
+    );
+  }
 }

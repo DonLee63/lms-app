@@ -73,3 +73,18 @@ final studentAssignmentsProvider = FutureProvider.family<List<HocphanAssignments
   final repository = ref.read(exerciseRepositoryProvider);
   return await repository.getStudentAssignments(studentId);
 });
+
+final tracNghiemQuestionsProvider = FutureProvider.family<List<QuizQuestion>, int>((ref, assignmentId) async {
+  final repository = ref.read(exerciseRepositoryProvider);
+  return await repository.getTracNghiemQuestions(assignmentId);
+});
+
+final tuLuanQuestionsProvider = FutureProvider.family<List<QuizQuestion>, int>((ref, assignmentId) async {
+  final repository = ref.read(exerciseRepositoryProvider);
+  return await repository.getTuLuanQuestions(assignmentId);
+});
+
+final assignmentSubmissionsProvider = FutureProvider.family<List<Submission>, int>((ref, assignmentId) async {
+  final repository = ref.read(exerciseRepositoryProvider);
+  return await repository.getAssignmentSubmissions(assignmentId);
+});

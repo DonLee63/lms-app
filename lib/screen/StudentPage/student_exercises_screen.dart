@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:study_management_app/models/quiz.dart';
 import 'package:study_management_app/providers/exercise_provider.dart';
+import 'package:study_management_app/screen/StudentPage/do_exercise_screen.dart';
 
 class StudentExercisesScreen extends ConsumerStatefulWidget {
-  final int studentId; // Nhận studentId qua constructor
+  final int studentId;
 
   const StudentExercisesScreen({super.key, required this.studentId});
 
@@ -33,7 +33,7 @@ class _StudentExercisesScreenState extends ConsumerState<StudentExercisesScreen>
       ),
       body: RefreshIndicator(
         onRefresh: () async {
-          ref.refresh(studentAssignmentsProvider(widget.studentId)); // Làm mới dữ liệu
+          ref.refresh(studentAssignmentsProvider(widget.studentId));
         },
         child: assignmentsAsync.when(
           data: (hocphanAssignments) {
@@ -58,37 +58,57 @@ class _StudentExercisesScreenState extends ConsumerState<StudentExercisesScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Học phần ${hocphan.hocphanId}',
+                          hocphan.hocphanName, // Hiển thị tên học phần
                           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 8),
-                        ...hocphan.assignments.map((assignment) => ListTile(
-                              title: Text(assignment.title),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text("Loại: ${assignment.quizType == 'trac_nghiem' ? 'Trắc nghiệm' : 'Tự luận'}"),
-                                  Text("Tổng điểm: ${assignment.totalPoints}"),
-                                  Text("Thời gian: ${assignment.time} phút"),
-                                  Text("Hạn nộp: ${DateFormat('dd/MM/yyyy HH:mm').format(assignment.dueDate)}"),
-                                ],
-                              ),
-                              trailing: ElevatedButton(
-                                onPressed: assignment.dueDate.isBefore(DateTime.now())
-                                    ? null // Vô hiệu hóa nếu quá hạn
-                                    : () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => DoExerciseScreen(
-                                              assignment: assignment,
-                                            ),
+                        ...hocphan.assignments.map((assignment) {
+                          final now = DateTime.now();
+                          final canDoExercise = assignment.startTime != null &&
+                              assignment.endTime != null &&
+                              now.isAfter(assignment.startTime!) &&
+                              now.isBefore(assignment.endTime!) &&
+                              now.isBefore(assignment.dueDate);
+
+                          final statusText = assignment.startTime != null && now.isBefore(assignment.startTime!)
+                              ? "Chưa đến giờ làm bài"
+                              : (assignment.endTime != null && now.isAfter(assignment.endTime!)) ||
+                                      now.isAfter(assignment.dueDate)
+                                  ? "Đã hết thời gian làm bài"
+                                  : "Có thể làm bài";
+
+                          return ListTile(
+                            title: Text(assignment.title),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("Loại: ${assignment.quizType == 'trac_nghiem' ? 'Trắc nghiệm' : 'Tự luận'}"),
+                                Text("Tổng điểm: ${assignment.totalPoints}"),
+                                Text("Thời gian: ${assignment.time} phút"),
+                                Text("Bắt đầu: ${assignment.startTime != null ? DateFormat('dd/MM/yyyy HH:mm').format(assignment.startTime!) : 'Chưa xác định'}"),
+                                Text("Kết thúc: ${assignment.endTime != null ? DateFormat('dd/MM/yyyy HH:mm').format(assignment.endTime!) : 'Chưa xác định'}"),
+                                Text("Hạn nộp: ${DateFormat('dd/MM/yyyy HH:mm').format(assignment.dueDate)}"),
+                                Text("Trạng thái: $statusText"),
+                              ],
+                            ),
+                            trailing: ElevatedButton(
+                              onPressed: canDoExercise
+                                  ? () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => DoExerciseScreen(
+                                            assignment: assignment,
+                                            studentId: widget.studentId,
                                           ),
-                                        );
-                                      },
-                                child: const Text("Làm bài"),
-                              ),
-                            )),
+                                        ),
+                                      );
+                                    }
+                                  : null,
+                              child: const Text("Làm bài"),
+                            ),
+                          );
+                        }),
                       ],
                     ),
                   ),
@@ -103,27 +123,6 @@ class _StudentExercisesScreenState extends ConsumerState<StudentExercisesScreen>
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class DoExerciseScreen extends StatelessWidget {
-  final StudentAssignment assignment;
-
-  const DoExerciseScreen({super.key, required this.assignment});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Làm bài: ${assignment.title}'),
-      ),
-      body: Center(
-        child: Text(
-          'Trang làm bài cho ${assignment.quizType} - ID: ${assignment.quizId}',
-          style: const TextStyle(fontSize: 20),
         ),
       ),
     );

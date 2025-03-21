@@ -8,6 +8,7 @@ import 'package:study_management_app/screen/TeacherPage/createquestionscreen.dar
 import 'package:study_management_app/screen/TeacherPage/createquizscreen.dart';
 import 'package:study_management_app/screen/TeacherPage/createessayquestionscreen.dart';
 import 'package:study_management_app/screen/TeacherPage/createessayquizscreen.dart';
+import 'package:study_management_app/screen/TeacherPage/teacher_assignments_screen.dart';
 
 class TeacherQuizScreen extends ConsumerStatefulWidget {
   final int hocphanId;
@@ -32,111 +33,104 @@ class _TeacherQuizScreenState extends ConsumerState<TeacherQuizScreen> {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       _userId = prefs.getInt('userId') ?? 1;
-      // Chỉ khởi tạo Future một lần khi _userId có giá trị
       _quizzesFuture = ref.read(exerciseRepositoryProvider).getTeacherQuizzes(_userId!, widget.hocphanId);
     });
   }
 
   Future<void> _assignQuiz(BuildContext context, Quiz quiz) async {
-    DateTime? dueDate;
-
-    await showDialog(
+    // Hiển thị dialog xác nhận giao bài
+    final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text("Giao bộ đề: ${quiz.title}"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text("Bài tập sẽ được giao cho tất cả sinh viên trong học phần."),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(dueDate != null
-                      ? "Hạn nộp: ${DateFormat('dd/MM/yyyy HH:mm').format(dueDate!)}"
-                      : "Chọn hạn nộp"),
-                ),
-                ElevatedButton(
-                  onPressed: () async {
-                    final pickedDate = await showDatePicker(
-                      context: context,
-                      initialDate: DateTime.now(),
-                      firstDate: DateTime.now(),
-                      lastDate: DateTime(2100),
-                    );
-                    if (pickedDate != null) {
-                      final pickedTime = await showTimePicker(
-                        context: context,
-                        initialTime: TimeOfDay.now(),
-                      );
-                      if (pickedTime != null) {
-                        dueDate = DateTime(
-                          pickedDate.year,
-                          pickedDate.month,
-                          pickedDate.day,
-                          pickedTime.hour,
-                          pickedTime.minute,
-                        );
-                        (context as Element).markNeedsBuild();
-                      }
-                    }
-                  },
-                  child: const Text("Chọn"),
-                ),
-              ],
-            ),
-          ],
+        content: Text(
+          "Bài tập sẽ được giao cho tất cả sinh viên trong học phần.\n"
+          "Hạn nộp: ${DateFormat('dd/MM/yyyy HH:mm').format(quiz.endTime)}",
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(context, false),
             child: const Text("Hủy"),
           ),
           TextButton(
-            onPressed: () async {
-              if (dueDate == null) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Vui lòng chọn hạn nộp")),
-                );
-                return;
-              }
-
-              final assignment = Assignment(
-                quizId: quiz.id,
-                quizType: quiz.type,
-                hocphanId: widget.hocphanId,
-                assignedAt: DateTime.now(),
-                dueDate: dueDate!,
-              );
-
-              try {
-                final result = await ref.read(assignQuizProvider({
-                  'assignment': assignment,
-                  'userId': _userId!,
-                }).future);
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Giao bộ đề thành công cho học phần ${widget.hocphanId}!")),
-                  );
-                  Navigator.pop(context);
-                  // Refresh danh sách bộ đề sau khi giao bài (nếu cần)
-                  setState(() {
-                    _quizzesFuture = ref.read(exerciseRepositoryProvider).getTeacherQuizzes(_userId!, widget.hocphanId);
-                  });
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Lỗi: $e")),
-                  );
-                }
-              }
-            },
+            onPressed: () => Navigator.pop(context, true),
             child: const Text("Giao"),
           ),
         ],
       ),
     );
+
+    if (confirm != true) return;
+
+    // Sử dụng quiz.endTime làm dueDate
+    final assignment = Assignment(
+      quizId: quiz.id,
+      quizType: quiz.type,
+      hocphanId: widget.hocphanId,
+      assignedAt: DateTime.now(),
+      dueDate: quiz.endTime, // Sử dụng endTime làm dueDate
+    );
+
+    try {
+      final result = await ref.read(assignQuizProvider({
+        'assignment': assignment,
+        'userId': _userId!,
+      }).future);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Giao bộ đề thành công cho học phần ${widget.hocphanId}!")),
+        );
+        setState(() {
+          _quizzesFuture = ref.read(exerciseRepositoryProvider).getTeacherQuizzes(_userId!, widget.hocphanId);
+        });
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Lỗi: $e")),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteQuiz(BuildContext context, Quiz quiz) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Xác nhận xóa"),
+        content: Text("Bạn có chắc chắn muốn xóa bộ đề '${quiz.title}'?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Hủy"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Xóa"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      await ref.read(exerciseRepositoryProvider).deleteQuiz(_userId!, quiz.id, quiz.type);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Xóa bộ đề thành công")),
+        );
+        setState(() {
+          _quizzesFuture = ref.read(exerciseRepositoryProvider).getTeacherQuizzes(_userId!, widget.hocphanId);
+        });
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Lỗi: $e")),
+        );
+      }
+    }
   }
 
   @override
@@ -191,6 +185,16 @@ class _TeacherQuizScreenState extends ConsumerState<TeacherQuizScreen> {
               ),
               child: const Text("Tạo bộ đề tự luận mới"),
             ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => TeacherAssignmentsScreen(hocphanId: widget.hocphanId),
+                ),
+              ),
+              child: const Text("Xem bài tập đã giao"),
+            ),
             const SizedBox(height: 24),
             const Text(
               "Danh sách bộ đề",
@@ -232,9 +236,20 @@ class _TeacherQuizScreenState extends ConsumerState<TeacherQuizScreen> {
                               Text("Kết thúc: ${DateFormat('dd/MM/yyyy HH:mm').format(quiz.endTime)}"),
                             ],
                           ),
-                          trailing: ElevatedButton(
-                            onPressed: () => _assignQuiz(context, quiz),
-                            child: const Text("Giao bài"),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ElevatedButton(
+                                onPressed: () => _assignQuiz(context, quiz),
+                                child: const Text("Giao bài"),
+                              ),
+                              const SizedBox(width: 8),
+                              ElevatedButton(
+                                onPressed: () => _deleteQuiz(context, quiz),
+                                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                                child: const Text("Xóa"),
+                              ),
+                            ],
                           ),
                         ),
                       );

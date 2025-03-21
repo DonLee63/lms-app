@@ -239,4 +239,143 @@ Future<List<HocphanAssignments>> getStudentAssignments(int studentId) async {
   }
   throw Exception("Lỗi khi lấy danh sách bài tập: ${response.statusCode} - ${response.body}");
 }
+
+Future<List<QuizQuestion>> getTracNghiemQuestions(int assignmentId) async {
+    final url = Uri.parse('$baseUrl/trac-nghiem-questions?assignment_id=$assignmentId');
+    final response = await http.get(
+      url,
+      headers: {"Content-Type": "application/json"},
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data['success']) {
+        return (data['data']['questions'] as List)
+            .map((q) => QuizQuestion.fromJson(q))
+            .toList();
+      }
+      throw Exception(data['message']);
+    }
+    throw Exception("Lỗi khi lấy câu hỏi trắc nghiệm: ${response.statusCode} - ${response.body}");
+  }
+
+  Future<void> submitTracNghiemQuiz(int studentId, int assignmentId, List<Map<String, int>> answers) async {
+    final url = Uri.parse('$baseUrl/submit-trac-nghiem-quiz');
+    final body = jsonEncode({
+      'student_id': studentId,
+      'assignment_id': assignmentId,
+      'answers': answers,
+    });
+
+    final response = await http.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: body,
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data['success']) {
+        return;
+      }
+      throw Exception(data['message']);
+    }
+    throw Exception("Lỗi khi nộp bài: ${response.statusCode} - ${response.body}");
+  }
+
+  Future<List<QuizQuestion>> getTuLuanQuestions(int assignmentId) async {
+    final url = Uri.parse('$baseUrl/tu-luan-questions?assignment_id=$assignmentId');
+    final response = await http.get(
+      url,
+      headers: {"Content-Type": "application/json"},
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data['success']) {
+        return (data['data']['questions'] as List)
+            .map((q) => QuizQuestion.fromJson(q))
+            .toList();
+      }
+      throw Exception(data['message']);
+    }
+    throw Exception("Lỗi khi lấy câu hỏi tự luận: ${response.statusCode} - ${response.body}");
+  }
+
+  Future<void> submitTuLuanQuiz(int studentId, int assignmentId, List<Map<String, dynamic>> answers) async {
+    final url = Uri.parse('$baseUrl/submit-tu-luan-quiz');
+    final body = jsonEncode({
+      'student_id': studentId,
+      'assignment_id': assignmentId,
+      'answers': answers,
+    });
+
+    final response = await http.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: body,
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data['success']) {
+        return;
+      }
+      throw Exception(data['message']);
+    }
+    throw Exception("Lỗi khi nộp bài: ${response.statusCode} - ${response.body}");
+  }
+
+  Future<List<Submission>> getAssignmentSubmissions(int assignmentId) async {
+    final url = Uri.parse('$baseUrl/assignment-submissions?assignment_id=$assignmentId');
+    final response = await http.get(
+      url,
+      headers: {"Content-Type": "application/json"},
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data['success']) {
+        return (data['data']['submissions'] as List)
+            .map((s) => Submission.fromJson(s))
+            .toList();
+      }
+      throw Exception(data['message']);
+    }
+    throw Exception("Lỗi khi lấy danh sách bài nộp: ${response.statusCode} - ${response.body}");
+  }
+
+  Future<List<Assignment>> getTeacherAssignments(int userId, int hocphanId) async {
+  final url = Uri.parse('$baseUrl/teacher-assignments?user_id=$userId&hocphan_id=$hocphanId');
+  final response = await http.get(
+    url,
+    headers: {"Content-Type": "application/json"},
+  );
+
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+    if (data['success']) {
+      return (data['data'] as List).map((item) => Assignment.fromJson(item)).toList();
+    }
+    throw Exception(data['message']);
+  }
+  throw Exception("Lỗi khi lấy danh sách bài tập: ${response.statusCode} - ${response.body}");
+}
+
+Future<void> deleteQuiz(int userId, int quizId, String quizType) async {
+  final url = Uri.parse('$baseUrl/teacher-quiz?user_id=$userId&quiz_id=$quizId&quiz_type=$quizType');
+  final response = await http.delete(
+    url,
+    headers: {"Content-Type": "application/json"},
+  );
+
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+    if (data['success']) {
+      return;
+    }
+    throw Exception(data['message']);
+  }
+  throw Exception("Lỗi khi xóa bộ đề: ${response.statusCode} - ${response.body}");
+}
 }
