@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_carousel_widget/flutter_carousel_widget.dart';
 import '../../constants/apilist.dart';
 import '../../providers/profile_provider.dart';
 import '../router.dart';
@@ -15,7 +16,14 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreen extends ConsumerState<HomeScreen> {
   String? _role; // Vai trò của người dùng (student hoặc teacher)
   int? _studentId; // ID của sinh viên
-  int? _teacherId; // ID của sinh viên
+  int? _teacherId; // ID của giảng viên
+
+  // Danh sách ảnh từ assets
+  final List<String> bannerImages = [
+    'assets/banner1.png',
+    'assets/banner2.png',
+    'assets/banner3.png',
+  ];
 
   @override
   void initState() {
@@ -77,23 +85,41 @@ class _HomeScreen extends ConsumerState<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: double.infinity,
-              height: 150,
-              decoration: BoxDecoration(
-                color: Colors.blue,
-                borderRadius: BorderRadius.circular(16),
+            // Slide banner
+            FlutterCarousel(
+              options: CarouselOptions(
+                height: 150,
+                autoPlay: true,
+                autoPlayInterval: const Duration(seconds: 3),
+                enlargeCenterPage: true,
+                viewportFraction: 1.0,
+                aspectRatio: 16 / 9,
+                showIndicator: true,
+                // slideIndicator: const CircularSlideIndicator(
+                //   currentIndicatorColor: Colors.blue,
+                //   indicatorBackgroundColor: Colors.white,
+                // ),
+                onPageChanged: (index, reason) {
+                  // Có thể thêm logic khi slide thay đổi
+                },
               ),
-              child: const Center(
-                child: Text(
-                  'Banner',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
+              items: bannerImages.map((imagePath) {
+                return Builder(
+                  builder: (BuildContext context) {
+                    return Container(
+                      width: MediaQuery.of(context).size.width,
+                      margin: const EdgeInsets.symmetric(horizontal: 5.0),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        image: DecorationImage(
+                          image: AssetImage(imagePath), // Sử dụng AssetImage cho ảnh từ assets
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    );
+                  },
+                );
+              }).toList(),
             ),
             const SizedBox(height: 20),
             Text(
@@ -104,7 +130,7 @@ class _HomeScreen extends ConsumerState<HomeScreen> {
                   ),
             ),
             const SizedBox(height: 10),
-            if (_role == 'student') 
+            if (_role == 'student')
               GridView.count(
                 shrinkWrap: true,
                 crossAxisCount: 3,
@@ -113,7 +139,6 @@ class _HomeScreen extends ConsumerState<HomeScreen> {
                 children: [
                   _buildCategoryButton('Đăng ký học phần', Icons.app_registration, () {
                     if (_studentId != null) {
-                      // Điều hướng đến màn hình đăng ký học phần và truyền studentId
                       Navigator.of(context).pushNamed(AppRoutes.courses, arguments: _studentId);
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -121,9 +146,8 @@ class _HomeScreen extends ConsumerState<HomeScreen> {
                       );
                     }
                   }),
-                  _buildCategoryButton('Lich thi', Icons.schedule, () {
+                  _buildCategoryButton('Lịch thi', Icons.schedule, () {
                     if (_studentId != null) {
-                      // Điều hướng đến màn hình đăng ký học phần và truyền studentId
                       Navigator.of(context).pushNamed(AppRoutes.examschedule, arguments: _studentId);
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -132,9 +156,8 @@ class _HomeScreen extends ConsumerState<HomeScreen> {
                     }
                   }),
                   _buildCategoryButton('Khảo sát', Icons.class_, () {
-                    if (_teacherId != null) {
-                      // Điều hướng đến màn hình đăng ký học phần và truyền studentId
-                     Navigator.of(context).pushNamed(AppRoutes.studentSurvey);
+                    if (_studentId != null) {
+                      Navigator.of(context).pushNamed(AppRoutes.studentSurvey);
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Không tìm thấy student_id')),
@@ -142,19 +165,26 @@ class _HomeScreen extends ConsumerState<HomeScreen> {
                     }
                   }),
                   _buildCategoryButton('Bài tập', Icons.class_, () {
-                    if (_teacherId != null) {
-                      // Điều hướng đến màn hình đăng ký học phần và truyền studentId
-                     Navigator.of(context).pushNamed(AppRoutes.studentExercises, arguments: _studentId);
+                    if (_studentId != null) {
+                      Navigator.of(context).pushNamed(AppRoutes.studentExercises, arguments: _studentId);
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Không tìm thấy student_id')),
                       );
                     }
                   }),
-                   _buildCategoryButton('Điểm số', Icons.class_, () {
-                    if (_teacherId != null) {
-                      // Điều hướng đến màn hình đăng ký học phần và truyền studentId
-                     Navigator.of(context).pushNamed(AppRoutes.studentExercises);
+                  _buildCategoryButton('Điểm số', Icons.class_, () {
+                    if (_studentId != null) {
+                      Navigator.of(context).pushNamed(AppRoutes.studentExercises);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Không tìm thấy student_id')),
+                      );
+                    }
+                  }),
+                  _buildCategoryButton('Tài liệu học tập', Icons.class_, () {
+                    if (_studentId != null) {
+                      Navigator.of(context).pushNamed(AppRoutes.studentenrolled, arguments: _studentId);
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Không tìm thấy student_id')),
@@ -163,8 +193,7 @@ class _HomeScreen extends ConsumerState<HomeScreen> {
                   }),
                 ],
               ),
-              
-            if (_role == 'teacher') 
+            if (_role == 'teacher')
               GridView.count(
                 shrinkWrap: true,
                 crossAxisCount: 3,
@@ -173,8 +202,7 @@ class _HomeScreen extends ConsumerState<HomeScreen> {
                 children: [
                   _buildCategoryButton('Lớp học phần', Icons.app_registration, () {
                     if (_teacherId != null) {
-                      // Điều hướng đến màn hình đăng ký học phần và truyền studentId
-                     Navigator.of(context).pushNamed(AppRoutes.phancong, arguments: _teacherId);
+                      Navigator.of(context).pushNamed(AppRoutes.phancong, arguments: _teacherId);
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Không tìm thấy teacher_id')),
@@ -183,8 +211,7 @@ class _HomeScreen extends ConsumerState<HomeScreen> {
                   }),
                   _buildCategoryButton('Lớp học', Icons.class_, () {
                     if (_teacherId != null) {
-                      // Điều hướng đến màn hình đăng ký học phần và truyền studentId
-                     Navigator.of(context).pushNamed(AppRoutes.getClass, arguments: _teacherId);
+                      Navigator.of(context).pushNamed(AppRoutes.getClass, arguments: _teacherId);
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Không tìm thấy teacher_id')),

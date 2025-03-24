@@ -3,7 +3,6 @@ class Classes {
   final String className;
   final int teacherId;
   final int nganhId;
-  final String description;
   final int maxStudents;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -13,7 +12,6 @@ class Classes {
     required this.className,
     required this.teacherId,
     required this.nganhId,
-    required this.description,
     required this.maxStudents,
     required this.createdAt,
     required this.updatedAt,
@@ -25,7 +23,6 @@ class Classes {
       className: json['class_name'],
       teacherId: json['teacher_id'],
       nganhId: json['nganh_id'],
-      description: json['description'],
       maxStudents: json['max_students'],
       createdAt: DateTime.parse(json['created_at']),
       updatedAt: DateTime.parse(json['updated_at']),
@@ -38,7 +35,6 @@ class Classes {
       'class_name': className,
       'teacher_id': teacherId,
       'nganh_id': nganhId,
-      'description': description,
       'max_students': maxStudents,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),

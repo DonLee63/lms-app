@@ -45,7 +45,7 @@ class _TeacherQuizScreenState extends ConsumerState<TeacherQuizScreen> {
         title: Text("Giao bộ đề: ${quiz.title}"),
         content: Text(
           "Bài tập sẽ được giao cho tất cả sinh viên trong học phần.\n"
-          "Hạn nộp: ${DateFormat('dd/MM/yyyy HH:mm').format(quiz.endTime)}",
+          "Hạn nộp: ${DateFormat('dd/MM/yyyy HH:mm').format(quiz.endTime.toLocal())}", // Chuyển đổi múi giờ
         ),
         actions: [
           TextButton(
@@ -68,7 +68,6 @@ class _TeacherQuizScreenState extends ConsumerState<TeacherQuizScreen> {
       quizType: quiz.type,
       hocphanId: widget.hocphanId,
       assignedAt: DateTime.now(),
-      dueDate: quiz.endTime, // Sử dụng endTime làm dueDate
     );
 
     try {
@@ -232,8 +231,10 @@ class _TeacherQuizScreenState extends ConsumerState<TeacherQuizScreen> {
                               Text("Loại: ${quiz.type == 'trac_nghiem' ? 'Trắc nghiệm' : 'Tự luận'}"),
                               Text("Tổng điểm: ${quiz.totalPoints}"),
                               Text("Thời gian: ${quiz.time} phút"),
-                              Text("Bắt đầu: ${DateFormat('dd/MM/yyyy HH:mm').format(quiz.startTime)}"),
-                              Text("Kết thúc: ${DateFormat('dd/MM/yyyy HH:mm').format(quiz.endTime)}"),
+                              Text(
+                                  "Bắt đầu: ${quiz.startTime != null ? DateFormat('dd/MM/yyyy HH:mm').format(quiz.startTime.toLocal()) : 'Chưa xác định'}"),
+                              Text(
+                                  "Kết thúc: ${quiz.endTime != null ? DateFormat('dd/MM/yyyy HH:mm').format(quiz.endTime.toLocal()) : 'Chưa xác định'}"),
                             ],
                           ),
                           trailing: Row(

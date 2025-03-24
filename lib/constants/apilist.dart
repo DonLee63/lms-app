@@ -30,6 +30,7 @@ final String api_nganhs = base + "/nganhs";
 final String api_donvi = base +"/donvi";
 final String api_chuyenNganh = base +"/chuyenNganh";
 final String api_classes = base +"/classes";
+final String api_get_classes = base +"/getclasses";
 
 
 

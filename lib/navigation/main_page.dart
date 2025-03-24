@@ -5,8 +5,10 @@ import '../screen/StudentPage/attendance_screen.dart';
 import '../screen/TeacherPage/teacher_timetable_screen.dart';
 import '../screen/home_screen.dart';
 import '../screen/StudentPage/timetable_screen.dart';
-import '../screen/notifications_screen.dart';
+import '../screen/StudentPage/student_notifications_screen.dart';
+import '../screen/TeacherPage/teacher_send_notification_screen.dart';
 import '../screen/settings_screen.dart';
+import '../providers/univerinfo_provider.dart';
 
 class MainPage extends ConsumerStatefulWidget {
   const MainPage({super.key});
@@ -20,6 +22,7 @@ class _MainPageState extends ConsumerState<MainPage> {
   int? _studentId;
   int? _teacherId;
   String? _role;
+  int? _classId; // Lưu classId
 
   List<Widget> _pages = [const HomeScreen()]; // Luôn có ít nhất 1 trang
 
@@ -40,8 +43,20 @@ class _MainPageState extends ConsumerState<MainPage> {
         _role = role;
         _studentId = studentId;
         _teacherId = teacherId;
-        _initializePages();
       });
+
+      // Nếu là giảng viên, lấy danh sách lớp học
+      if (_role == 'teacher' && _teacherId != null) {
+        final classesAsync = ref.read(getClassesFutureProvider(_teacherId!).future);
+        final classes = await classesAsync;
+        if (classes.isNotEmpty) {
+          setState(() {
+            _classId = classes.first.id; // Lấy classId đầu tiên
+          });
+        }
+      }
+
+      _initializePages();
     }
   }
 
@@ -55,14 +70,20 @@ class _MainPageState extends ConsumerState<MainPage> {
       pages.add(TeacherTimetableScreen(teacherId: _teacherId!));
     }
 
-    pages.addAll([
-      const NotificationsScreen(),
-      const SettingsScreen(),
-    ]);
+    // Thêm trang thông báo dựa trên vai trò
+    if (_role == 'student' && _studentId != null) {
+      pages.add(StudentNotificationsScreen(studentId: _studentId!));
+    } else if (_role == 'teacher' && _teacherId != null && _classId != null) {
+      pages.add(TeacherSendNotificationScreen(teacherId: _teacherId!, classId: _classId!));
+    } else if (_role == 'teacher') {
+      // Nếu không lấy được classId, hiển thị một trang placeholder
+      pages.add(const Center(child: Text('Không thể tải danh sách lớp học')));
+    }
+
+    pages.add(const SettingsScreen());
 
     setState(() {
       _pages = pages;
-      // Đảm bảo _currentIndex hợp lệ
       if (_currentIndex >= _pages.length) {
         _currentIndex = 0;
       }
@@ -124,7 +145,6 @@ class _MainPageState extends ConsumerState<MainPage> {
         icon: Icon(Icons.notifications),
         label: 'Notifications',
       ),
-      
       const BottomNavigationBarItem(
         icon: Icon(Icons.settings),
         label: 'Settings',

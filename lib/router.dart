@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:study_management_app/screen/AuthPage/login_screen.dart';
 import 'package:study_management_app/screen/ProfilePage/edit_profile_screen.dart';
 import 'package:study_management_app/screen/ProfilePage/profile_screen.dart';
+import 'package:study_management_app/screen/StudentPage/student_enrolled_courses.dart';
 import 'package:study_management_app/screen/StudentPage/student_exercises_screen.dart';
 import 'package:study_management_app/screen/StudentPage/student_info_screen.dart';
 import 'package:study_management_app/screen/StudentPage/student_screen.dart';
@@ -61,6 +62,7 @@ class AppRoutes {
   static const String studentSurvey = '/studentSurvey';
   static const String studentExercises = '/studentExercises';
   static const String courseClass = '/courseClass';
+  static const String studentenrolled = '/studentenrolled';
 
   static Map<String, WidgetBuilder> routes = {
     splash: (context) => SplashScreen(),
@@ -79,6 +81,14 @@ class AppRoutes {
       if (ModalRoute.of(context)!.settings.arguments != null) {
         final studentId = ModalRoute.of(context)!.settings.arguments as int;
         return StudentExercisesScreen(studentId: studentId);
+      } else {
+        return const HomeScreen();
+      }
+    },
+    studentenrolled:(context) {
+      if (ModalRoute.of(context)!.settings.arguments != null) {
+        final studentId = ModalRoute.of(context)!.settings.arguments as int;
+        return StudentEnrolledCourses(studentId: studentId);
       } else {
         return const HomeScreen();
       }

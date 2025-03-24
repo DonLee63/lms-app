@@ -206,6 +206,29 @@ Future<List<Map<String, dynamic>>> getStudentsByTeacher(int teacherId, int phanc
   }
 }
 
+Future<void> updateEnrollmentStatus(int userId, int enrollmentId, String newStatus) async {
+    final url = Uri.parse('$base/update-enrollment-status');
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'user_id': userId,
+        'enrollment_id': enrollmentId,
+        'status': newStatus,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data['success'] != true) {
+        throw Exception(data['message']);
+      }
+    } else {
+      throw Exception('Failed to update enrollment status: ${response.statusCode} - ${response.body}');
+    }
+  }
 
 }
 

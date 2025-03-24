@@ -53,7 +53,7 @@ class Assignment {
   final int? totalPoints;
   final int? time;
   final DateTime? assignedAt;
-  final DateTime? dueDate;
+  // final DateTime? dueDate;
 
   Assignment({
     this.assignmentId,
@@ -64,7 +64,7 @@ class Assignment {
     this.totalPoints,
     this.time,
     this.assignedAt,
-    this.dueDate,
+    // this.dueDate,
   });
 
   factory Assignment.fromJson(Map<String, dynamic> json) => Assignment(
@@ -76,7 +76,7 @@ class Assignment {
         totalPoints: json['total_points'] as int?,
         time: json['time'] as int?,
         assignedAt: json['assigned_at'] != null ? DateTime.parse(json['assigned_at'] as String) : null,
-        dueDate: json['due_date'] != null ? DateTime.parse(json['due_date'] as String) : null,
+        // dueDate: json['due_date'] != null ? DateTime.parse(json['due_date'] as String) : null,
       );
 
   Map<String, dynamic> toJson() => {
@@ -87,7 +87,7 @@ class Assignment {
         'total_points': totalPoints,
         'time': time,
         'assigned_at': assignedAt?.toIso8601String(),
-        'due_date': dueDate?.toIso8601String(),
+        // 'due_date': dueDate?.toIso8601String(),
       };
 }
 
@@ -120,7 +120,7 @@ class StudentAssignment {
   final int time;
   final DateTime? startTime;
   final DateTime? endTime;
-  final DateTime dueDate;
+  // final DateTime dueDate;
 
   StudentAssignment({
     required this.assignmentId,
@@ -131,7 +131,7 @@ class StudentAssignment {
     required this.time,
     this.startTime,
     this.endTime,
-    required this.dueDate,
+    // required this.dueDate,
   });
 
   factory StudentAssignment.fromJson(Map<String, dynamic> json) => StudentAssignment(
@@ -143,7 +143,7 @@ class StudentAssignment {
         time: json['time'] as int,
         startTime: json['start_time'] != null ? DateTime.parse(json['start_time'] as String) : null,
         endTime: json['end_time'] != null ? DateTime.parse(json['end_time'] as String) : null,
-        dueDate: DateTime.parse(json['due_date'] as String),
+        // dueDate: DateTime.parse(json['due_date'] as String),
       );
 }
 
@@ -181,28 +181,44 @@ class QuizAnswer {
   }
 }
 
+
 class Submission {
-  final int submissionId;
-  final int studentId;
+  final int? submissionId; // Cho phép null
+  final int? assignmentId; // Cho phép null
+  final int? studentId; // Cho phép null
   final String studentName;
   final String? submittedAt;
   final dynamic score;
+  final String? answers;
+  final String quizType;
 
   Submission({
     required this.submissionId,
+    required this.assignmentId,
     required this.studentId,
     required this.studentName,
     this.submittedAt,
     required this.score,
+    this.answers,
+    required this.quizType,
   });
 
-  factory Submission.fromJson(Map<String, dynamic> json) {
+  factory Submission.fromJson(Map<String, dynamic> json, String quizType) {
     return Submission(
-      submissionId: json['submission_id'] as int,
-      studentId: json['student_id'] as int,
-      studentName: json['student_name'] as String,
+      submissionId: json['submission_id'] is String
+          ? int.tryParse(json['submission_id'])
+          : (json['submission_id'] as int?),
+      assignmentId: json['assignment_id'] is String
+          ? int.tryParse(json['assignment_id'])
+          : (json['assignment_id'] as int?),
+      studentId: json['student_id'] is String
+          ? int.tryParse(json['student_id'])
+          : (json['student_id'] as int?),
+      studentName: json['student_name'] as String? ?? 'Không xác định', // Xử lý null cho studentName
       submittedAt: json['submitted_at'] as String?,
-      score: json['score'],
+      score: json['score'] is String ? null : json['score']?.toDouble(),
+      answers: json['answers'] as String?,
+      quizType: quizType,
     );
   }
 }

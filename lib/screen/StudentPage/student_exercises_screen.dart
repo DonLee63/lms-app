@@ -64,16 +64,16 @@ class _StudentExercisesScreenState extends ConsumerState<StudentExercisesScreen>
                         const SizedBox(height: 8),
                         ...hocphan.assignments.map((assignment) {
                           final now = DateTime.now();
+                          // Bỏ kiểm tra dueDate trong logic canDoExercise
                           final canDoExercise = assignment.startTime != null &&
                               assignment.endTime != null &&
                               now.isAfter(assignment.startTime!) &&
-                              now.isBefore(assignment.endTime!) &&
-                              now.isBefore(assignment.dueDate);
+                              now.isBefore(assignment.endTime!);
 
+                          // Bỏ kiểm tra dueDate trong logic statusText
                           final statusText = assignment.startTime != null && now.isBefore(assignment.startTime!)
                               ? "Chưa đến giờ làm bài"
-                              : (assignment.endTime != null && now.isAfter(assignment.endTime!)) ||
-                                      now.isAfter(assignment.dueDate)
+                              : (assignment.endTime != null && now.isAfter(assignment.endTime!))
                                   ? "Đã hết thời gian làm bài"
                                   : "Có thể làm bài";
 
@@ -85,9 +85,11 @@ class _StudentExercisesScreenState extends ConsumerState<StudentExercisesScreen>
                                 Text("Loại: ${assignment.quizType == 'trac_nghiem' ? 'Trắc nghiệm' : 'Tự luận'}"),
                                 Text("Tổng điểm: ${assignment.totalPoints}"),
                                 Text("Thời gian: ${assignment.time} phút"),
-                                Text("Bắt đầu: ${assignment.startTime != null ? DateFormat('dd/MM/yyyy HH:mm').format(assignment.startTime!) : 'Chưa xác định'}"),
-                                Text("Kết thúc: ${assignment.endTime != null ? DateFormat('dd/MM/yyyy HH:mm').format(assignment.endTime!) : 'Chưa xác định'}"),
-                                Text("Hạn nộp: ${DateFormat('dd/MM/yyyy HH:mm').format(assignment.dueDate)}"),
+                                Text(
+                                    "Bắt đầu: ${assignment.startTime != null ? DateFormat('dd/MM/yyyy HH:mm').format(assignment.startTime!.toLocal()) : 'Chưa xác định'}"),
+                                Text(
+                                    "Kết thúc: ${assignment.endTime != null ? DateFormat('dd/MM/yyyy HH:mm').format(assignment.endTime!.toLocal()) : 'Chưa xác định'}"),
+                                // Bỏ dòng hiển thị Hạn nộp (due_date)
                                 Text("Trạng thái: $statusText"),
                               ],
                             ),

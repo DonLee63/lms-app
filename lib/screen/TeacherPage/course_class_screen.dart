@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:study_management_app/screen/TeacherPage/teacherquizscreen.dart';
+import 'package:study_management_app/screen/TeacherPage/teacher_upload_content_screen.dart'; // Import màn hình mới
 import '../../providers/course_provider.dart';
 import '../TeacherPage/teacher_attendance_screen.dart';
 
@@ -166,7 +167,7 @@ class _CourseClassScreenState extends ConsumerState<CourseClassScreen> {
                   future: studentsFuture,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const SizedBox.shrink(); // Không hiển thị gì khi đang tải
+                      return const SizedBox.shrink();
                     }
                     final students = snapshot.data ?? [];
                     final hocphanId = students.isNotEmpty && students[0]["hocphan_id"] != null
@@ -186,12 +187,31 @@ class _CourseClassScreenState extends ConsumerState<CourseClassScreen> {
                                 ),
                               );
                             }
-                          : null, // Vô hiệu hóa nếu không có hocphan_id
+                          : null,
                       label: const Text("Bài tập"),
                       icon: const Icon(Icons.assignment, color: Colors.white),
                       backgroundColor: hocphanId != null ? Colors.pink : Colors.grey,
                     );
                   },
+                ),
+                const SizedBox(height: 10),
+                // Thêm nút để tải lên nội dung giảng dạy
+                FloatingActionButton.extended(
+                  heroTag: "upload_content",
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => TeacherUploadContentScreen(
+                          teacherId: widget.teacherId,
+                          phancongId: widget.phancongId,
+                        ),
+                      ),
+                    );
+                  },
+                  label: const Text("Tải lên tài liệu"),
+                  icon: const Icon(Icons.upload_file, color: Colors.white),
+                  backgroundColor: Colors.blue,
                 ),
                 const SizedBox(height: 10),
               ],

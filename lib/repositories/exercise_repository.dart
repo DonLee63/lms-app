@@ -326,23 +326,21 @@ Future<List<QuizQuestion>> getTracNghiemQuestions(int assignmentId) async {
     throw Exception("Lỗi khi nộp bài: ${response.statusCode} - ${response.body}");
   }
 
-  Future<List<Submission>> getAssignmentSubmissions(int assignmentId) async {
-    final url = Uri.parse('$baseUrl/assignment-submissions?assignment_id=$assignmentId');
-    final response = await http.get(
-      url,
-      headers: {"Content-Type": "application/json"},
-    );
+Future<Map<String, dynamic>> getAssignmentSubmissions(int assignmentId) async {
+    final url = Uri.parse('$base/assignment-submissions/$assignmentId');
+    print('Requesting URL: $url'); // Debug URL
+    final response = await http.get(url, headers: {
+      'Content-Type': 'application/json',
+    });
+
+    print('Response status: ${response.statusCode}'); // Debug status code
+    print('Response body: ${response.body}'); // Debug response body
 
     if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      if (data['success']) {
-        return (data['data']['submissions'] as List)
-            .map((s) => Submission.fromJson(s))
-            .toList();
-      }
-      throw Exception(data['message']);
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    } else {
+      throw Exception('Failed to load submissions: ${response.statusCode}');
     }
-    throw Exception("Lỗi khi lấy danh sách bài nộp: ${response.statusCode} - ${response.body}");
   }
 
   Future<List<Assignment>> getTeacherAssignments(int userId, int hocphanId) async {
@@ -378,4 +376,52 @@ Future<void> deleteQuiz(int userId, int quizId, String quizType) async {
   }
   throw Exception("Lỗi khi xóa bộ đề: ${response.statusCode} - ${response.body}");
 }
+
+Future<void> deleteAssignment(int userId, int assignmentId) async {
+  final url = Uri.parse('$base/delete-assignment');
+
+  final response = await http.post(
+    url,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: jsonEncode({
+      'user_id': userId,
+      'assignment_id': assignmentId,
+    }),
+  );
+
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+    if (data['success'] != true) {
+      throw Exception(data['message']);
+    }
+  } else {
+    throw Exception('Failed to delete assignment: ${response.statusCode} - ${response.body}');
+  }
+}
+
+Future<void> updateSubmissionScore(int userId, int submissionId, double score) async {
+    final url = Uri.parse('$base/update-submission-score');
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'user_id': userId,
+        'submission_id': submissionId,
+        'score': score,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data['success'] != true) {
+        throw Exception(data['message']);
+      }
+    } else {
+      throw Exception('Failed to update submission score: ${response.statusCode} - ${response.body}');
+    }
+  }
 }

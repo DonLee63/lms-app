@@ -100,6 +100,31 @@ Future<List<Map<String, dynamic>>> fetchClasses(int nganhId) async {
 }
 
 
+Future<List<Map<String, dynamic>>> getClasses(int teacherId) async {
+    final url = Uri.parse(api_get_classes); // Không cần query string vì dùng POST
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'teacher_id': teacherId}), // Gửi teacherId trong body
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true) {
+          return List<Map<String, dynamic>>.from(data['data']);
+        } else {
+          throw Exception(data['message'] ?? 'Lỗi khi lấy danh sách lớp.');
+        }
+      } else {
+        throw Exception('Lỗi HTTP: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Lỗi khi gọi API: $e');
+    }
+  }
+
   Future<List<PhanCong>> fetchPhanCongByTeacherId(int teacherId) async {
     final response = await http.get(
       Uri.parse('$base/phancong?giangvien_id=$teacherId'),

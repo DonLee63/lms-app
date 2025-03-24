@@ -84,3 +84,12 @@ final teacherScheduleProvider = FutureProvider.family<List<dynamic>, int>((ref, 
   final repository = ref.watch(courseRepositoryProvider);
   return repository.fetchTeacherSchedule(teacherId);
 });
+
+// Provider để cập nhật trạng thái của enrollment
+final updateEnrollmentStatusProvider = FutureProvider.family<void, Map<String, dynamic>>((ref, params) async {
+  final repository = ref.read(courseRepositoryProvider);
+  final userId = params['userId'] as int;
+  final enrollmentId = params['enrollmentId'] as int;
+  final newStatus = params['newStatus'] as String;
+  await repository.updateEnrollmentStatus(userId, enrollmentId, newStatus);
+});

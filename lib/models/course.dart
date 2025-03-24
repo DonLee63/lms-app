@@ -8,6 +8,7 @@ class Course {
   final String teacherName;
   final String loai;
   final int hocKyId;
+  final int enrollmentId;
 
   Course({
     required this.phancongId,
@@ -19,6 +20,7 @@ class Course {
     required this.teacherName,
     required this.loai,
     required this.hocKyId,
+    required this.enrollmentId,
   });
 
   // Hàm chuyển đổi từ JSON
@@ -33,6 +35,7 @@ class Course {
       teacherName: json['teacher_name']?.toString() ?? 'Không rõ',
       loai: json['loai']?.toString() ?? 'N/A',
       hocKyId: int.tryParse(json['hoc_ky_id'].toString()) ?? 0,
+      enrollmentId: int.tryParse(json['enrollment_id'].toString()) ?? 0,
     );
   }
 
@@ -48,6 +51,7 @@ class Course {
       'teacher_name': teacherName,
       'loai': loai,
       'hoc_ky_id': hocKyId,
+      'enrollment_id': enrollmentId,
     };
   }
 }

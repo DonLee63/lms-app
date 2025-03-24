@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:study_management_app/models/classes.dart';
 import '../models/phan_cong.dart';
 import '../repositories/univerinfo_reponsitory.dart';
 
@@ -30,6 +31,12 @@ final chuyenNganhFutureProvider = FutureProvider<List<Map<String, dynamic>>>((re
 final classesFutureProvider = FutureProvider.family<List<Map<String, dynamic>>, int>((ref, nganhId) async {
   final repository = ref.watch(univerInfoRepositoryProvider);
   return await repository.fetchClasses(nganhId);
+});
+
+final getClassesFutureProvider = FutureProvider.family<List<Classes>, int>((ref, teacherId) async {
+  final repository = ref.watch(univerInfoRepositoryProvider);
+  final data = await repository.getClasses(teacherId);
+  return data.map((json) => Classes.fromJson(json)).toList();
 });
 
 

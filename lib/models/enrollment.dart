@@ -1,5 +1,6 @@
 class Enrollment {
   final int enrollmentId;
+  final int phancongId;
   final String title;
   final int tinchi;
   final String courseCode;
@@ -10,6 +11,7 @@ class Enrollment {
 
   Enrollment({
     required this.enrollmentId,
+    required this.phancongId,
     required this.title,
     required this.tinchi,
     required this.courseCode,
@@ -23,6 +25,7 @@ class Enrollment {
   factory Enrollment.fromJson(Map<String, dynamic> json) {
     return Enrollment(
       enrollmentId: json['enrollment_id'] ?? 0,
+      phancongId: json['phancong_id'] ?? 0,
       title: json['title'] ?? 'N/A',
       tinchi: json['tinchi'] ?? 0,
       courseCode: json['course_code'] ?? 'N/A',
@@ -37,6 +40,7 @@ class Enrollment {
   Map<String, dynamic> toJson() {
     return {
       'enrollment_id': enrollmentId,
+      'phancong_id': phancongId,
       'title': title,
       'tinchi': tinchi,
       'course_code': courseCode,
