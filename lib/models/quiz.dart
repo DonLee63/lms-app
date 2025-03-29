@@ -120,7 +120,8 @@ class StudentAssignment {
   final int time;
   final DateTime? startTime;
   final DateTime? endTime;
-  // final DateTime dueDate;
+  // final DateTime? dueDate; // Bỏ comment và thêm lại due_date
+  final bool hasSubmitted; // Thêm has_submitted
 
   StudentAssignment({
     required this.assignmentId,
@@ -131,7 +132,8 @@ class StudentAssignment {
     required this.time,
     this.startTime,
     this.endTime,
-    // required this.dueDate,
+    // this.dueDate,
+    required this.hasSubmitted,
   });
 
   factory StudentAssignment.fromJson(Map<String, dynamic> json) => StudentAssignment(
@@ -143,7 +145,8 @@ class StudentAssignment {
         time: json['time'] as int,
         startTime: json['start_time'] != null ? DateTime.parse(json['start_time'] as String) : null,
         endTime: json['end_time'] != null ? DateTime.parse(json['end_time'] as String) : null,
-        // dueDate: DateTime.parse(json['due_date'] as String),
+        // dueDate: json['due_date'] != null ? DateTime.parse(json['due_date'] as String) : null, // Parse due_date
+        hasSubmitted: json['has_submitted'] as bool? ?? false, // Parse has_submitted
       );
 }
 
@@ -182,14 +185,34 @@ class QuizAnswer {
 }
 
 
+class Answer {
+  final int? questionId;
+  final String question;
+  final String content;
+
+  Answer({
+    required this.questionId,
+    required this.question,
+    required this.content,
+  });
+
+  factory Answer.fromJson(Map<String, dynamic> json) {
+    return Answer(
+      questionId: json['question_id'] as int?,
+      question: json['question'] as String? ?? 'Không xác định',
+      content: json['content'] as String? ?? 'Không xác định',
+    );
+  }
+}
+
 class Submission {
-  final int? submissionId; // Cho phép null
-  final int? assignmentId; // Cho phép null
-  final int? studentId; // Cho phép null
+  final int? submissionId;
+  final int? assignmentId;
+  final int? studentId;
   final String studentName;
   final String? submittedAt;
   final dynamic score;
-  final String? answers;
+  final List<Answer>? answers;
   final String quizType;
 
   Submission({
@@ -203,22 +226,25 @@ class Submission {
     required this.quizType,
   });
 
-  factory Submission.fromJson(Map<String, dynamic> json, String quizType) {
-    return Submission(
-      submissionId: json['submission_id'] is String
-          ? int.tryParse(json['submission_id'])
-          : (json['submission_id'] as int?),
-      assignmentId: json['assignment_id'] is String
-          ? int.tryParse(json['assignment_id'])
-          : (json['assignment_id'] as int?),
-      studentId: json['student_id'] is String
-          ? int.tryParse(json['student_id'])
-          : (json['student_id'] as int?),
-      studentName: json['student_name'] as String? ?? 'Không xác định', // Xử lý null cho studentName
-      submittedAt: json['submitted_at'] as String?,
-      score: json['score'] is String ? null : json['score']?.toDouble(),
-      answers: json['answers'] as String?,
-      quizType: quizType,
-    );
-  }
+factory Submission.fromJson(Map<String, dynamic> json, String? quizType) {
+  final answersJson = json['answers'] != null ? jsonDecode(json['answers']) as List<dynamic> : null;
+  final answers = answersJson?.map((answer) => Answer.fromJson(answer as Map<String, dynamic>)).toList();
+
+  return Submission(
+    submissionId: json['submission_id'] is String
+        ? int.tryParse(json['submission_id'])
+        : (json['submission_id'] as int?),
+    assignmentId: json['assignment_id'] is String
+        ? int.tryParse(json['assignment_id'])
+        : (json['assignment_id'] as int?),
+    studentId: json['student_id'] is String
+        ? int.tryParse(json['student_id'])
+        : (json['student_id'] as int?),
+    studentName: json['student_name'] as String? ?? 'Không xác định',
+    submittedAt: json['submitted_at'] as String?,
+    score: json['score'] is String ? null : json['score']?.toDouble(),
+    answers: answers,
+    quizType: quizType ?? 'tu_luan',
+  );
+}
 }

@@ -327,21 +327,25 @@ Future<List<QuizQuestion>> getTracNghiemQuestions(int assignmentId) async {
   }
 
 Future<Map<String, dynamic>> getAssignmentSubmissions(int assignmentId) async {
-    final url = Uri.parse('$base/assignment-submissions/$assignmentId');
-    print('Requesting URL: $url'); // Debug URL
-    final response = await http.get(url, headers: {
-      'Content-Type': 'application/json',
-    });
+  try {
+    final response = await http.get(
+      Uri.parse('$base/assignment-submissions/$assignmentId'),
+      headers: {'Content-Type': 'application/json'},
+    );
 
-    print('Response status: ${response.statusCode}'); // Debug status code
-    print('Response body: ${response.body}'); // Debug response body
+    print('Response status: ${response.statusCode}');
+    print('Response body: ${response.body}');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body) as Map<String, dynamic>;
     } else {
       throw Exception('Failed to load submissions: ${response.statusCode}');
     }
+  } catch (e) {
+    print('Error in getAssignmentSubmissions: $e');
+    rethrow;
   }
+}
 
   Future<List<Assignment>> getTeacherAssignments(int userId, int hocphanId) async {
   final url = Uri.parse('$baseUrl/teacher-assignments?user_id=$userId&hocphan_id=$hocphanId');
@@ -422,6 +426,22 @@ Future<void> updateSubmissionScore(int userId, int submissionId, double score) a
       }
     } else {
       throw Exception('Failed to update submission score: ${response.statusCode} - ${response.body}');
+    }
+  }
+  Future<Map<String, dynamic>> getStudentAverageScores(int hocphanId) async {
+    final url = Uri.parse('$base/hocphan/$hocphanId/avg-scores');
+    print('Requesting URL: $url'); // Debug URL
+    final response = await http.get(url, headers: {
+      'Content-Type': 'application/json',
+    });
+
+    print('Response status: ${response.statusCode}'); // Debug status code
+    print('Response body: ${response.body}'); // Debug response body
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    } else {
+      throw Exception('Failed to load average scores: ${response.statusCode}');
     }
   }
 }

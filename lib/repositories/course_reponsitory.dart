@@ -230,6 +230,89 @@ Future<void> updateEnrollmentStatus(int userId, int enrollmentId, String newStat
     }
   }
 
+  Future<Map<String, dynamic>> updateStudentScores({
+    required int studentId,
+    required int hocphanId,
+    required double diemBP,
+    double? thi1,
+    double? thi2,
+  }) async {
+    final url = Uri.parse('$base/student-scores/$studentId/$hocphanId');
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'DiemBP': diemBP,
+        'Thi1': thi1,
+        'Thi2': thi2,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to update scores: ${response.body}');
+    }
+  }
+
+
+  Future<Map<String, dynamic>> getStudentScores(int studentId, int hocphanId) async {
+    final url = Uri.parse('$base/get-student-scores/$studentId/$hocphanId');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        print('Response status: ${response.statusCode}'); // Debug status code
+        print('Response body: ${response.body}'); // Debug response body
+        return data['data'].isNotEmpty ? data['data'][0] : <String, dynamic>{};
+      } else {
+        throw Exception(data['message']);
+      }
+    } else {
+      throw Exception('Failed to load scores: ${response.body}');
+    }
+  }
+
+  // Lấy thông tin tiến độ học tập của sinh viên
+  Future<Map<String, dynamic>> getStudentProgress(int studentId) async {
+    final url = Uri.parse('$base/student-progress/$studentId');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        print('Response status: ${response.statusCode}');
+        print('Response body: ${response.body}');
+        return data['data'];
+      } else {
+        throw Exception(data['message']);
+      }
+    } else {
+      throw Exception('Failed to load progress: ${response.body}');
+    }
+  }
+
+  // Lấy thông tin thống kê và báo cáo cho giảng viên
+  Future<Map<String, dynamic>> getTeacherReport(int teacherId) async {
+    final url = Uri.parse('$base/teacher-report/$teacherId');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        print('Response status: ${response.statusCode}');
+        print('Response body: ${response.body}');
+        return data['data'];
+      } else {
+        throw Exception(data['message']);
+      }
+    } else {
+      throw Exception('Failed to load report: ${response.body}');
+    }
+  }
 }
 
 

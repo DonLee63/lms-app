@@ -91,15 +91,23 @@ final tuLuanQuestionsProvider = FutureProvider.family<List<QuizQuestion>, int>((
 
 final assignmentSubmissionsProvider = FutureProvider.family<List<Submission>, int>((ref, assignmentId) async {
   final repository = ref.read(exerciseRepositoryProvider);
-  final responseJson = await repository.getAssignmentSubmissions(assignmentId);
+  final response = await repository.getAssignmentSubmissions(assignmentId);
 
-  // Trích xuất data.submissions và quiz_type từ JSON
-  final data = responseJson['data'] as Map<String, dynamic>;
-  final quizType = data['quiz_type'] as String;
-  final submissionsJson = data['submissions'] as List<dynamic>;
+  // Debug response
+  print('API Response: $response');
 
-  // Ánh xạ dữ liệu vào model Submission
-  return submissionsJson.map((json) => Submission.fromJson(json as Map<String, dynamic>, quizType)).toList();
+  // Lấy data từ response
+  final data = response['data'] as Map<String, dynamic>?;
+
+  if (data == null) {
+    throw Exception('Response data is null');
+  }
+
+  final quizType = data['quiz_type'] as String? ?? 'tu_luan';
+  print('Parsed quizType: $quizType'); // Debug quizType
+
+  final submissionsJson = data['submissions'] as List<dynamic>? ?? [];
+  return submissionsJson.map((submission) => Submission.fromJson(submission, quizType)).toList();
 });
 
 // Provider để cập nhật điểm số bài nộp
@@ -109,4 +117,10 @@ final updateSubmissionScoreProvider = FutureProvider.family<void, Map<String, dy
   final submissionId = params['submissionId'] as int;
   final score = params['score'] as double;
   await repository.updateSubmissionScore(userId, submissionId, score);
+});
+
+// Provider để lấy điểm trung bình của tất cả sinh viên trong học phần
+final studentAverageScoresProvider = FutureProvider.family<Map<String, dynamic>, int>((ref, hocphanId) async {
+  final repository = ref.read(exerciseRepositoryProvider);
+  return repository.getStudentAverageScores(hocphanId);
 });

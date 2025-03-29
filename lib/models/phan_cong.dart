@@ -1,5 +1,6 @@
 class PhanCong {
   final int phancongId;
+  final int hocphanId;
   final String hocphanTitle;
   final int tinchi;
   final String hocphanCode;
@@ -9,6 +10,7 @@ class PhanCong {
 
   PhanCong({
     required this.phancongId,
+    required this.hocphanId,
     required this.hocphanTitle,
     required this.tinchi,
     required this.hocphanCode,
@@ -20,6 +22,7 @@ class PhanCong {
   factory PhanCong.fromJson(Map<String, dynamic> json) {
     return PhanCong(
       phancongId: json['phancong_id'],
+      hocphanId: json['hocphan_id'],
       hocphanTitle: json['hocphan_title'],
       tinchi: json['tinchi'],
       hocphanCode: json['hocphan_code'],

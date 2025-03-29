@@ -5,11 +5,14 @@ import 'package:study_management_app/screen/ProfilePage/profile_screen.dart';
 import 'package:study_management_app/screen/StudentPage/student_enrolled_courses.dart';
 import 'package:study_management_app/screen/StudentPage/student_exercises_screen.dart';
 import 'package:study_management_app/screen/StudentPage/student_info_screen.dart';
+import 'package:study_management_app/screen/StudentPage/student_scores_courses.dart';
 import 'package:study_management_app/screen/StudentPage/student_screen.dart';
-import 'package:study_management_app/screen/StudentPage/student_survey_screen.dart';
+import 'package:study_management_app/screen/StudentPage/student_survey_list_screen.dart';
+import 'package:study_management_app/screen/TeacherPage/enter_scores_screen.dart';
 import 'package:study_management_app/screen/TeacherPage/phan_cong_screen.dart';
 import 'package:study_management_app/screen/TeacherPage/student_list_screen.dart';
 import 'package:study_management_app/screen/TeacherPage/course_class_screen.dart';
+import 'package:study_management_app/screen/TeacherPage/teacher_hocphan_screen.dart';
 import 'package:study_management_app/screen/TeacherPage/teacher_info_screen.dart';
 import 'package:study_management_app/screen/TeacherPage/teacher_screen.dart';
 import 'package:study_management_app/screen/StudentPage/exam_schedule_screen.dart';
@@ -63,6 +66,9 @@ class AppRoutes {
   static const String studentExercises = '/studentExercises';
   static const String courseClass = '/courseClass';
   static const String studentenrolled = '/studentenrolled';
+  static const String enterScores = '/enterScores';
+  static const String teacherhocphan = '/teacherhocphan';
+  static const String studentscorecourse = '/studentscorecourse';
 
   static Map<String, WidgetBuilder> routes = {
     splash: (context) => SplashScreen(),
@@ -76,7 +82,41 @@ class AppRoutes {
     studentscreen: (context) => StudentScreen(),
     teacherscreen: (context) => TeacherScreen(),
     editprofile: (context) => const EditProfileScreen(),
-    studentSurvey: (context) => const StudentSurveyScreen(),
+    enterScores: (context) {
+      if (ModalRoute.of(context)!.settings.arguments != null) {
+        final args = ModalRoute.of(context)!.settings.arguments as Map<String, int>;
+        final hocphanId = args['hocphanId'] ?? 0;
+        final teacherId = args['teacherId'] ?? 0;
+        final phancongId = args['phancongId'] ?? 0;
+        return EnterScoresScreen(hocphanId: hocphanId, teacherId: teacherId, phancongId: phancongId);
+      } else {
+        return const HomeScreen();
+      }
+    },
+     teacherhocphan: (context) {
+      if (ModalRoute.of(context)!.settings.arguments != null) {
+        final teacherId = ModalRoute.of(context)!.settings.arguments as int;
+        return TeacherHocPhanScreen(teacherId: teacherId);
+      } else {
+        return const HomeScreen();
+      }
+    },
+    studentSurvey: (context) {
+      if (ModalRoute.of(context)!.settings.arguments != null) {
+        final studentId = ModalRoute.of(context)!.settings.arguments as int;
+        return StudentSurveyListScreen(studentId: studentId);
+      } else {
+        return const HomeScreen();
+      }
+    },
+    studentscorecourse: (context) {
+      if (ModalRoute.of(context)!.settings.arguments != null) {
+        final studentId = ModalRoute.of(context)!.settings.arguments as int;
+        return StudentScoresCourses(studentId: studentId);
+      } else {
+        return const HomeScreen();
+      }
+    },
     studentExercises:(context) {
       if (ModalRoute.of(context)!.settings.arguments != null) {
         final studentId = ModalRoute.of(context)!.settings.arguments as int;

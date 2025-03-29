@@ -93,3 +93,35 @@ final updateEnrollmentStatusProvider = FutureProvider.family<void, Map<String, d
   final newStatus = params['newStatus'] as String;
   await repository.updateEnrollmentStatus(userId, enrollmentId, newStatus);
 });
+
+final updateScoreProvider = FutureProvider.family<Map<String, dynamic>, Map<String, dynamic>>((ref, params) async {
+  final repository = ref.read(courseRepositoryProvider);
+  return repository.updateStudentScores(
+    studentId: params['studentId'],
+    hocphanId: params['hocphanId'],
+    diemBP: params['diemBP'],
+    thi1: params['thi1'],
+    thi2: params['thi2'],
+  );
+});
+
+// Provider để lấy điểm của sinh viên theo studentId và hocphanId
+final studentScoresProvider = FutureProvider.family<Map<String, dynamic>, Map<String, dynamic>>((ref, params) async {
+  final repository = ref.read(courseRepositoryProvider);
+  return repository.getStudentScores(
+    params['studentId'] as int,
+    params['hocphanId'] as int,
+  );
+});
+
+// Provider để lấy dữ liệu tiến độ học tập
+final studentProgressProvider = FutureProvider.family<Map<String, dynamic>, int>((ref, studentId) async {
+  final courseRepo = ref.read(courseRepositoryProvider);
+  return courseRepo.getStudentProgress(studentId);
+});
+
+// Provider để lấy dữ liệu thống kê và báo cáo
+final teacherReportProvider = FutureProvider.family<Map<String, dynamic>, int>((ref, teacherId) async {
+  final courseRepo = ref.read(courseRepositoryProvider);
+  return courseRepo.getTeacherReport(teacherId);
+});

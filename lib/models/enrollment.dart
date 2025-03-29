@@ -1,6 +1,7 @@
 class Enrollment {
   final int enrollmentId;
   final int phancongId;
+  final int hocphanId;
   final String title;
   final int tinchi;
   final String courseCode;
@@ -12,6 +13,7 @@ class Enrollment {
   Enrollment({
     required this.enrollmentId,
     required this.phancongId,
+    required this.hocphanId,
     required this.title,
     required this.tinchi,
     required this.courseCode,
@@ -26,6 +28,7 @@ class Enrollment {
     return Enrollment(
       enrollmentId: json['enrollment_id'] ?? 0,
       phancongId: json['phancong_id'] ?? 0,
+      hocphanId: json['hocphan_id'] ?? 0,
       title: json['title'] ?? 'N/A',
       tinchi: json['tinchi'] ?? 0,
       courseCode: json['course_code'] ?? 'N/A',
@@ -41,6 +44,7 @@ class Enrollment {
     return {
       'enrollment_id': enrollmentId,
       'phancong_id': phancongId,
+      'hocphan_id': hocphanId,
       'title': title,
       'tinchi': tinchi,
       'course_code': courseCode,

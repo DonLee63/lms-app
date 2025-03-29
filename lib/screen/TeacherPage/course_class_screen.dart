@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:study_management_app/screen/TeacherPage/teacherquizscreen.dart';
-import 'package:study_management_app/screen/TeacherPage/teacher_upload_content_screen.dart'; // Import màn hình mới
+import 'package:study_management_app/screen/TeacherPage/teacher_upload_content_screen.dart';
 import '../../providers/course_provider.dart';
 import '../TeacherPage/teacher_attendance_screen.dart';
+import '../TeacherPage/student_average_scores_screen.dart'; // Import màn hình mới
 
 class CourseClassScreen extends ConsumerStatefulWidget {
   final int teacherId;
@@ -174,28 +175,50 @@ class _CourseClassScreenState extends ConsumerState<CourseClassScreen> {
                         ? students[0]["hocphan_id"] as int
                         : null;
 
-                    return FloatingActionButton.extended(
-                      heroTag: "assignment",
-                      onPressed: hocphanId != null
-                          ? () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => TeacherQuizScreen(
-                                    hocphanId: hocphanId,
-                                  ),
-                                ),
-                              );
-                            }
-                          : null,
-                      label: const Text("Bài tập"),
-                      icon: const Icon(Icons.assignment, color: Colors.white),
-                      backgroundColor: hocphanId != null ? Colors.pink : Colors.grey,
+                    return Column(
+                      children: [
+                        FloatingActionButton.extended(
+                          heroTag: "assignment",
+                          onPressed: hocphanId != null
+                              ? () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => TeacherQuizScreen(
+                                        hocphanId: hocphanId,
+                                      ),
+                                    ),
+                                  );
+                                }
+                              : null,
+                          label: const Text("Bài tập"),
+                          icon: const Icon(Icons.assignment, color: Colors.white),
+                          backgroundColor: hocphanId != null ? Colors.pink : Colors.grey,
+                        ),
+                        const SizedBox(height: 10),
+                        FloatingActionButton.extended(
+                          heroTag: "average_scores",
+                          onPressed: hocphanId != null
+                              ? () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => StudentAverageScoresScreen(
+                                        hocphanId: hocphanId,
+                                      ),
+                                    ),
+                                  );
+                                }
+                              : null,
+                          label: const Text("Xem điểm trung bình"),
+                          icon: const Icon(Icons.score, color: Colors.white),
+                          backgroundColor: hocphanId != null ? Colors.purple : Colors.grey,
+                        ),
+                      ],
                     );
                   },
                 ),
                 const SizedBox(height: 10),
-                // Thêm nút để tải lên nội dung giảng dạy
                 FloatingActionButton.extended(
                   heroTag: "upload_content",
                   onPressed: () {

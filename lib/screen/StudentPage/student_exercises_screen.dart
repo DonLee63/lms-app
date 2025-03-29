@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:study_management_app/providers/exercise_provider.dart';
-import 'package:study_management_app/screen/StudentPage/do_exercise_screen.dart';
+import '../../providers/exercise_provider.dart';
+// import '../../models/quiz.dart';
+import 'do_exercise_screen.dart';
 
 class StudentExercisesScreen extends ConsumerStatefulWidget {
   final int studentId;
@@ -58,24 +59,25 @@ class _StudentExercisesScreenState extends ConsumerState<StudentExercisesScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          hocphan.hocphanName, // Hiển thị tên học phần
+                          hocphan.hocphanName,
                           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 8),
                         ...hocphan.assignments.map((assignment) {
                           final now = DateTime.now();
-                          // Bỏ kiểm tra dueDate trong logic canDoExercise
-                          final canDoExercise = assignment.startTime != null &&
+                          final canDoExercise = !assignment.hasSubmitted &&
+                              assignment.startTime != null &&
                               assignment.endTime != null &&
                               now.isAfter(assignment.startTime!) &&
                               now.isBefore(assignment.endTime!);
 
-                          // Bỏ kiểm tra dueDate trong logic statusText
-                          final statusText = assignment.startTime != null && now.isBefore(assignment.startTime!)
-                              ? "Chưa đến giờ làm bài"
-                              : (assignment.endTime != null && now.isAfter(assignment.endTime!))
-                                  ? "Đã hết thời gian làm bài"
-                                  : "Có thể làm bài";
+                          final statusText = assignment.hasSubmitted
+                              ? "Đã nộp bài"
+                              : (assignment.startTime != null && now.isBefore(assignment.startTime!))
+                                  ? "Chưa đến giờ làm bài"
+                                  : (assignment.endTime != null && now.isAfter(assignment.endTime!))
+                                      ? "Đã hết thời gian làm bài"
+                                      : "Có thể làm bài";
 
                           return ListTile(
                             title: Text(assignment.title),
@@ -89,7 +91,6 @@ class _StudentExercisesScreenState extends ConsumerState<StudentExercisesScreen>
                                     "Bắt đầu: ${assignment.startTime != null ? DateFormat('dd/MM/yyyy HH:mm').format(assignment.startTime!.toLocal()) : 'Chưa xác định'}"),
                                 Text(
                                     "Kết thúc: ${assignment.endTime != null ? DateFormat('dd/MM/yyyy HH:mm').format(assignment.endTime!.toLocal()) : 'Chưa xác định'}"),
-                                // Bỏ dòng hiển thị Hạn nộp (due_date)
                                 Text("Trạng thái: $statusText"),
                               ],
                             ),

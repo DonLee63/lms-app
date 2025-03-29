@@ -157,7 +157,7 @@ class _HomeScreen extends ConsumerState<HomeScreen> {
                   }),
                   _buildCategoryButton('Khảo sát', Icons.class_, () {
                     if (_studentId != null) {
-                      Navigator.of(context).pushNamed(AppRoutes.studentSurvey);
+                      Navigator.of(context).pushNamed(AppRoutes.studentSurvey,  arguments: _studentId);
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Không tìm thấy student_id')),
@@ -175,7 +175,7 @@ class _HomeScreen extends ConsumerState<HomeScreen> {
                   }),
                   _buildCategoryButton('Điểm số', Icons.class_, () {
                     if (_studentId != null) {
-                      Navigator.of(context).pushNamed(AppRoutes.studentExercises);
+                      Navigator.of(context).pushNamed(AppRoutes.studentscorecourse, arguments: _studentId);
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Không tìm thấy student_id')),
@@ -212,6 +212,15 @@ class _HomeScreen extends ConsumerState<HomeScreen> {
                   _buildCategoryButton('Lớp học', Icons.class_, () {
                     if (_teacherId != null) {
                       Navigator.of(context).pushNamed(AppRoutes.getClass, arguments: _teacherId);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Không tìm thấy teacher_id')),
+                      );
+                    }
+                  }),
+                  _buildCategoryButton('Điểm', Icons.class_, () {
+                    if (_teacherId != null) {
+                      Navigator.of(context).pushNamed(AppRoutes.teacherhocphan, arguments: _teacherId);
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Không tìm thấy teacher_id')),

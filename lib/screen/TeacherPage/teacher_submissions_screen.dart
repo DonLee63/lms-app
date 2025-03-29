@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../providers/exercise_provider.dart';
-import '../../models/quiz.dart'; // Import Submission từ quiz.dart
+import 'grade_submission_screen.dart';
 
 class TeacherSubmissionsScreen extends ConsumerStatefulWidget {
   final int assignmentId;
@@ -18,12 +18,11 @@ class TeacherSubmissionsScreen extends ConsumerStatefulWidget {
 
 class _TeacherSubmissionsScreenState extends ConsumerState<TeacherSubmissionsScreen> {
   int? _userId;
-  final Map<int, TextEditingController> _scoreControllers = {};
 
   @override
   void initState() {
     super.initState();
-    print('Assignment ID: ${widget.assignmentId}'); // Debug assignmentId
+    print('Assignment ID: ${widget.assignmentId}');
     _loadUserId();
   }
 
@@ -32,12 +31,6 @@ class _TeacherSubmissionsScreenState extends ConsumerState<TeacherSubmissionsScr
     setState(() {
       _userId = prefs.getInt('userId') ?? 1;
     });
-  }
-
-  @override
-  void dispose() {
-    _scoreControllers.forEach((key, controller) => controller.dispose());
-    super.dispose();
   }
 
   @override
@@ -59,6 +52,9 @@ class _TeacherSubmissionsScreenState extends ConsumerState<TeacherSubmissionsScr
             return const Center(child: Text('Chưa có sinh viên nào nộp bài'));
           }
 
+          print('Submissions: $submissions');
+          print('First submission quizType: ${submissions.first.quizType}');
+
           final isTracNghiem = submissions.first.quizType == 'trac_nghiem';
 
           return ListView.builder(
@@ -67,7 +63,6 @@ class _TeacherSubmissionsScreenState extends ConsumerState<TeacherSubmissionsScr
             itemBuilder: (context, index) {
               final submission = submissions[index];
 
-              // Kiểm tra submissionId trước khi sử dụng
               if (submission.submissionId == null) {
                 return const Card(
                   elevation: 2,
@@ -76,12 +71,6 @@ class _TeacherSubmissionsScreenState extends ConsumerState<TeacherSubmissionsScr
                     padding: EdgeInsets.all(12.0),
                     child: Text('Bài nộp không hợp lệ: Thiếu submission ID'),
                   ),
-                );
-              }
-
-              if (!isTracNghiem && !_scoreControllers.containsKey(submission.submissionId)) {
-                _scoreControllers[submission.submissionId!] = TextEditingController(
-                  text: submission.score != null ? submission.score.toStringAsFixed(2) : '',
                 );
               }
 
@@ -100,74 +89,32 @@ class _TeacherSubmissionsScreenState extends ConsumerState<TeacherSubmissionsScr
                       const SizedBox(height: 4),
                       Text('Thời gian nộp: ${submission.submittedAt ?? 'Không xác định'}'),
                       const SizedBox(height: 8),
-                      if (!isTracNghiem && submission.answers != null) ...[
-                        const Text(
-                          'Câu trả lời:',
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          submission.answers!,
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                        const SizedBox(height: 8),
-                      ],
                       Row(
                         children: [
                           const Text(
                             'Điểm: ',
                             style: TextStyle(fontSize: 16, color: Colors.blue),
                           ),
-                          if (isTracNghiem)
-                            Text(
-                              submission.score != null ? submission.score.toStringAsFixed(2) : 'Chưa chấm',
-                              style: const TextStyle(fontSize: 16, color: Colors.blue),
-                            )
-                          else ...[
-                            Expanded(
-                              child: TextField(
-                                controller: _scoreControllers[submission.submissionId!],
-                                keyboardType: TextInputType.number,
-                                decoration: const InputDecoration(
-                                  hintText: 'Nhập điểm (0-10)',
-                                  border: OutlineInputBorder(),
-                                  contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
+                          Text(
+                            submission.score != null ? submission.score.toStringAsFixed(2) : 'Chưa chấm',
+                            style: const TextStyle(fontSize: 16, color: Colors.blue),
+                          ),
+                          const Spacer(),
+                          if (!isTracNghiem) ...[
                             ElevatedButton(
-                              onPressed: () async {
-                                final scoreText = _scoreControllers[submission.submissionId!]!.text;
-                                final score = double.tryParse(scoreText);
-                                if (score == null || score < 0 || score > 10) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Vui lòng nhập điểm hợp lệ (0-10)')),
-                                  );
-                                  return;
-                                }
-
-                                try {
-                                  await ref.read(updateSubmissionScoreProvider({
-                                    'userId': _userId!,
-                                    'submissionId': submission.submissionId!,
-                                    'score': score,
-                                  }).future);
-                                  ref.invalidate(assignmentSubmissionsProvider(widget.assignmentId));
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Cập nhật điểm số thành công')),
-                                    );
-                                  }
-                                } catch (e) {
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text('Lỗi: $e')),
-                                    );
-                                  }
-                                }
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => GradeSubmissionScreen(
+                                      submission: submission,
+                                      userId: _userId!,
+                                      assignmentId: widget.assignmentId,
+                                    ),
+                                  ),
+                                );
                               },
-                              child: const Text('Lưu'),
+                              child: const Text('Chấm điểm'),
                             ),
                           ],
                         ],
