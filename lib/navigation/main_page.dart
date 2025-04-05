@@ -92,26 +92,39 @@ class _MainPageState extends ConsumerState<MainPage> {
 
   @override
   Widget build(BuildContext context) {
+     final isDarkMode = Theme.of(context).brightness == Brightness.dark; // Kiểm tra chế độ tối
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: isDarkMode ? Colors.grey[900] : const Color.fromARGB(255, 38, 208, 255), // Màu nền tùy thuộc vào chế độ tối
       body: (_role == null || _pages.isEmpty)
           ? const Center(child: CircularProgressIndicator())
           : IndexedStack(
               index: _currentIndex,
               children: _pages,
             ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.blue,
-        unselectedItemColor: Colors.grey,
-        backgroundColor: Theme.of(context).bottomNavigationBarTheme.backgroundColor,
-        items: _buildBottomNavigationItems(),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isDarkMode 
+              ? [const Color.fromARGB(255, 7, 30, 75)!, const Color.fromARGB(255, 76, 133, 248)!]
+              : [const Color.fromARGB(255, 255, 255, 255)!, Colors.blue[400]!],
+          ),
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          onTap: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
+          },
+          type: BottomNavigationBarType.fixed,
+          selectedItemColor: const Color.fromARGB(255, 17, 83, 198),
+          unselectedItemColor: const Color.fromARGB(255, 0, 0, 0),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          items: _buildBottomNavigationItems(),
+        ),
       ),
     );
   }

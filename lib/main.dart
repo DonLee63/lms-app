@@ -28,11 +28,21 @@ class MyApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       title: 'Study Management App',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        colorScheme: ColorScheme.light(
+          primary: Colors.blue,
+          secondary: Colors.lightBlue,
+          surface: Colors.blue[50]!,
+          background: Colors.white,
+        ),
         brightness: Brightness.light,
       ),
       darkTheme: ThemeData(
-        primarySwatch: Colors.blue,
+        colorScheme: ColorScheme.dark(
+          primary: const Color.fromARGB(255, 31, 106, 171)!,
+          secondary: const Color.fromARGB(255, 22, 92, 183)!,
+          surface: const Color.fromARGB(255, 0, 0, 0)!,
+          background: Colors.grey[900]!,
+        ),
         brightness: Brightness.dark,
       ),
       themeMode: themeNotifier.isDarkMode ? ThemeMode.dark : ThemeMode.light,

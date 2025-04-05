@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:animate_do/animate_do.dart';
 import 'package:study_management_app/providers/teaching_content_provider.dart';
 
 class TeacherUploadContentScreen extends ConsumerStatefulWidget {
@@ -25,11 +26,10 @@ class _TeacherUploadContentScreenState extends ConsumerState<TeacherUploadConten
   String? _fileName;
   bool _isLoading = false;
 
-  // Hàm chọn file từ thiết bị
   Future<void> _pickFile() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'], // Giới hạn loại file
+      allowedExtensions: ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'],
     );
 
     if (result != null && result.files.single.path != null) {
@@ -40,7 +40,6 @@ class _TeacherUploadContentScreenState extends ConsumerState<TeacherUploadConten
     }
   }
 
-  // Hàm gửi nội dung giảng dạy
   Future<void> _submitContent() async {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -48,7 +47,7 @@ class _TeacherUploadContentScreenState extends ConsumerState<TeacherUploadConten
 
     if (_selectedFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng chọn file để tải lên')),
+        const SnackBar(content: Text('Vui lòng chọn file để tải lên'), backgroundColor: Colors.red),
       );
       return;
     }
@@ -66,14 +65,13 @@ class _TeacherUploadContentScreenState extends ConsumerState<TeacherUploadConten
       }).future);
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Tải lên thành công: ${result['title']}')),
+        SnackBar(content: Text('Tải lên thành công: ${result['title']}'), backgroundColor: Colors.green),
       );
 
-      // Quay lại màn hình trước sau khi tải lên thành công
       Navigator.pop(context);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Lỗi khi tải lên: $e')),
+        SnackBar(content: Text('Lỗi khi tải lên: $e'), backgroundColor: Colors.red),
       );
     } finally {
       setState(() {
@@ -90,81 +88,121 @@ class _TeacherUploadContentScreenState extends ConsumerState<TeacherUploadConten
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor, // Sử dụng màu nền từ theme
       appBar: AppBar(
-        title: const Text('Tải lên nội dung giảng dạy'),
+        backgroundColor: Colors.blue[900],
+        elevation: 4.0,
+        title: const Text(
+          'Tải lên tài liệu',
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.blue[900]!, Colors.blue[700]!],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Trường nhập tiêu đề
-              TextFormField(
-                controller: _titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Tiêu đề',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Vui lòng nhập tiêu đề';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // Nút chọn file
-              ElevatedButton.icon(
-                onPressed: _pickFile,
-                icon: const Icon(Icons.attach_file),
-                label: const Text('Chọn file'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 8),
-
-              // Hiển thị tên file đã chọn
-              if (_fileName != null)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: Row(
+          child: SingleChildScrollView(
+            child: FadeInUp(
+              duration: const Duration(milliseconds: 500),
+              child: Card(
+                elevation: 6.0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                color: isDarkMode ? Colors.grey[850] : Colors.white,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.insert_drive_file, color: Colors.grey),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          _fileName!,
-                          style: const TextStyle(color: Colors.grey),
-                          overflow: TextOverflow.ellipsis,
+                      TextFormField(
+                        controller: _titleController,
+                        decoration: InputDecoration(
+                          labelText: 'Tiêu đề',
+                          prefixIcon: Icon(Icons.title, color: isDarkMode ? Colors.blue[300] : Colors.blue[800]),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          filled: true,
+                          fillColor: isDarkMode ? Colors.grey[800] : Colors.grey[200],
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Vui lòng nhập tiêu đề';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton.icon(
+                        onPressed: _pickFile,
+                        icon: const Icon(Icons.attach_file),
+                        label: const Text('Chọn file'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue[700],
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          minimumSize: const Size(double.infinity, 50),
+                          elevation: 4.0,
                         ),
                       ),
+                      if (_fileName != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 12.0),
+                          child: Row(
+                            children: [
+                              Icon(Icons.insert_drive_file, color: Colors.green[700]),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Tệp đã chọn: $_fileName',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: isDarkMode ? Colors.grey[300] : Colors.grey[700],
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      const SizedBox(height: 24),
+                      _isLoading
+                          ? Center(
+                              child: CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.blue[700]!),
+                              ),
+                            )
+                          : ElevatedButton.icon(
+                              onPressed: _submitContent,
+                              icon: const Icon(Icons.upload),
+                              label: const Text('Tải lên'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green[700],
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                minimumSize: const Size(double.infinity, 50),
+                                elevation: 4.0,
+                              ),
+                            ),
                     ],
                   ),
                 ),
-
-              const Spacer(),
-
-              // Nút gửi
-              Center(
-                child: _isLoading
-                    ? const CircularProgressIndicator()
-                    : ElevatedButton(
-                        onPressed: _submitContent,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                        ),
-                        child: const Text('Tải lên'),
-                      ),
               ),
-            ],
+            ),
           ),
         ),
       ),

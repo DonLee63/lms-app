@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:animate_do/animate_do.dart';
 import '../../models/enrollment.dart';
 import '../../providers/course_provider.dart';
 
@@ -11,22 +12,31 @@ class EnrolledCourseScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final enrolledCoursesAsync = ref.watch(enrolledCoursesProvider(studentId));
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.blue,
-        title: const Text('Học phần đã đăng ký'),
+        backgroundColor: Colors.blue[800],
+        elevation: 0,
+        title: const Text(
+          'Học phần đã đăng ký',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
             Navigator.of(context).pop();
           },
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh, color: Colors.white),
             onPressed: () => _fetchCourses(ref),
           ),
         ],
@@ -35,38 +45,65 @@ class EnrolledCourseScreen extends ConsumerWidget {
         onRefresh: () async {
           _fetchCourses(ref);
         },
+        color: Colors.blue[800],
+        backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
         child: enrolledCoursesAsync.when(
           data: (enrollments) => Column(
             children: [
-              // Tổng tín chỉ
-              _buildTotalTinChi(enrollments),
-              const Divider(),
-              // Danh sách học phần
+              FadeInDown(
+                duration: const Duration(milliseconds: 600),
+                child: _buildTotalTinChi(context, enrollments), // Truyền context vào đây
+              ),
+              Divider(
+                color: isDarkMode ? Colors.grey[600] : Colors.grey[300],
+                thickness: 1.0,
+              ),
               Expanded(child: _buildCourseList(context, ref, enrollments)),
             ],
           ),
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, stack) => Center(child: Text('Lỗi: $error')),
+          loading: () => Center(
+            child: CircularProgressIndicator(
+              color: Colors.blue[800],
+            ),
+          ),
+          error: (error, stack) => Center(
+            child: Text(
+              'Lỗi: $error',
+              style: TextStyle(
+                fontSize: 16,
+                color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+              ),
+            ),
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildTotalTinChi(List<Enrollment> enrollments) {
+  Widget _buildTotalTinChi(BuildContext context, List<Enrollment> enrollments) { // Thêm context làm tham số
     final totalTinChi = enrollments.fold<int>(0, (sum, enrollment) => sum + enrollment.tinchi);
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text(
+          Text(
             'Tổng số tín chỉ:',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: isDarkMode ? Colors.white : Colors.black,
+            ),
           ),
           Text(
             '$totalTinChi tín chỉ',
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blue),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: isDarkMode ? Colors.blue[300] : Colors.blue[800],
+            ),
           ),
         ],
       ),
@@ -74,34 +111,97 @@ class EnrolledCourseScreen extends ConsumerWidget {
   }
 
   Widget _buildCourseList(BuildContext context, WidgetRef ref, List<Enrollment> enrollments) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     if (enrollments.isEmpty) {
-      return const Center(child: Text('Bạn chưa đăng ký học phần nào.'));
+      return Center(
+        child: Text(
+          'Bạn chưa đăng ký học phần nào.',
+          style: TextStyle(
+            fontSize: 16,
+            color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+          ),
+        ),
+      );
     }
 
     return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       itemCount: enrollments.length,
       itemBuilder: (context, index) {
         final enrollment = enrollments[index];
-        return Card(
-          margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
-          child: ListTile(
-            title: Text(
-              enrollment.title,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Tín chỉ: ${enrollment.tinchi}'),
-                Text('Lớp: ${enrollment.classCourse}'),
-                Text('Giảng viên: ${enrollment.teacherName}'),
-                Text('Trạng thái: ${enrollment.status}'),
-              ],
-            ),
-            trailing: IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red),
-              onPressed: () => _confirmCancelEnrollment(context, ref, enrollment),
+        return FadeInUp(
+          duration: Duration(milliseconds: 600 + (index * 100)),
+          child: Card(
+            margin: const EdgeInsets.symmetric(vertical: 8.0),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+            elevation: 6.0,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16.0),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    isDarkMode ? Colors.grey[800]! : Colors.blue[50]!,
+                    isDarkMode ? Colors.grey[900]! : Colors.white,
+                  ],
+                ),
+              ),
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                title: Text(
+                  enrollment.title,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: isDarkMode ? Colors.white : Colors.blue[900],
+                  ),
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Tín chỉ: ${enrollment.tinchi}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                      ),
+                    ),
+                    Text(
+                      'Lớp: ${enrollment.classCourse}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                      ),
+                    ),
+                    Text(
+                      'Giảng viên: ${enrollment.teacherName}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                      ),
+                    ),
+                    Text(
+                      'Trạng thái: ${enrollment.status}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: enrollment.status == 'Đã duyệt'
+                            ? Colors.green
+                            : (enrollment.status == 'Chưa duyệt' ? Colors.orange : Colors.red),
+                      ),
+                    ),
+                  ],
+                ),
+                trailing: ScaleTransitionButton(
+                  onPressed: () => _confirmCancelEnrollment(context, ref, enrollment),
+                  child: Icon(
+                    Icons.delete,
+                    color: Colors.red,
+                    size: 24,
+                  ),
+                ),
+              ),
             ),
           ),
         );
@@ -110,23 +210,74 @@ class EnrolledCourseScreen extends ConsumerWidget {
   }
 
   void _confirmCancelEnrollment(BuildContext context, WidgetRef ref, Enrollment enrollment) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Hủy đăng ký'),
-          content: Text('Bạn có chắc chắn muốn hủy đăng ký học phần "${enrollment.title}" không?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Hủy'),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+          title: Text(
+            'Hủy đăng ký',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: isDarkMode ? Colors.white : Colors.black,
             ),
-            TextButton(
+          ),
+          content: Text(
+            'Bạn có chắc chắn muốn hủy đăng ký học phần "${enrollment.title}" không?',
+            style: TextStyle(
+              fontSize: 16,
+              color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+            ),
+          ),
+          actions: [
+            ScaleTransitionButton(
+              onPressed: () => Navigator.pop(context),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                child: Text(
+                  'Hủy',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+            ),
+            ScaleTransitionButton(
               onPressed: () async {
-                Navigator.of(context).pop();
+                Navigator.pop(context);
                 await _cancelEnrollment(context, ref, enrollment.enrollmentId);
               },
-              child: const Text('Đồng ý'),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.red[600]!,
+                      Colors.red[800]!,
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                child: Text(
+                  'Đồng ý',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
             ),
           ],
         );
@@ -140,22 +291,94 @@ class EnrolledCourseScreen extends ConsumerWidget {
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result), backgroundColor: Colors.green),
+          SnackBar(
+            content: Text(result),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(16.0),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8.0),
+            ),
+          ),
         );
       }
 
-      _fetchCourses(ref); // Gọi fetchCourse sau khi xóa
+      _fetchCourses(ref);
     } catch (error) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi: $error'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Lỗi: $error'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(16.0),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8.0),
+            ),
+          ),
         );
       }
     }
   }
 
-  // Hàm fetchCourse để làm mới danh sách học phần
   void _fetchCourses(WidgetRef ref) {
     ref.invalidate(enrolledCoursesProvider(studentId));
+  }
+}
+
+class ScaleTransitionButton extends StatefulWidget {
+  final VoidCallback onPressed;
+  final Widget child;
+
+  const ScaleTransitionButton({
+    super.key,
+    required this.onPressed,
+    required this.child,
+  });
+
+  @override
+  _ScaleTransitionButtonState createState() => _ScaleTransitionButtonState();
+}
+
+class _ScaleTransitionButtonState extends State<ScaleTransitionButton> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) {
+        _controller.forward();
+      },
+      onTapUp: (_) {
+        _controller.reverse();
+        widget.onPressed();
+      },
+      onTapCancel: () {
+        _controller.reverse();
+      },
+      child: ScaleTransition(
+        scale: _scaleAnimation,
+        child: widget.child,
+      ),
+    );
   }
 }

@@ -444,4 +444,48 @@ Future<void> updateSubmissionScore(int userId, int submissionId, double score) a
       throw Exception('Failed to load average scores: ${response.statusCode}');
     }
   }
+
+  // Xóa câu hỏi trắc nghiệm
+  Future<void> deleteQuestion(int questionId) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$base/questions/$questionId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          // Thêm header nếu cần, ví dụ: Authorization
+        },
+      );
+
+      final jsonResponse = jsonDecode(response.body);
+
+      if (response.statusCode != 200) {
+        throw Exception(jsonResponse['message'] ?? 'Lỗi khi xóa câu hỏi trắc nghiệm');
+      }
+    } catch (e) {
+      throw Exception('Lỗi: $e');
+    }
+  }
+
+  // Xóa câu hỏi tự luận
+  Future<void> deleteEssayQuestion(int questionId) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$base/essay-questions/$questionId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          // Thêm header nếu cần, ví dụ: Authorization
+        },
+      );
+
+      final jsonResponse = jsonDecode(response.body);
+
+      if (response.statusCode != 200) {
+        throw Exception(jsonResponse['message'] ?? 'Lỗi khi xóa câu hỏi tự luận');
+      }
+    } catch (e) {
+      throw Exception('Lỗi: $e');
+    }
+  }
 }

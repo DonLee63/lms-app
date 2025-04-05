@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:animate_do/animate_do.dart';
 import '../../providers/course_provider.dart';
 import 'student_course_screen.dart';
 
@@ -16,81 +17,155 @@ class _StudentListScreenState extends ConsumerState<StudentListScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Làm mới danh sách sinh viên khi vào màn hình
-    // ignore: unused_result
     ref.refresh(classStudentsProvider(widget.teacherId));
   }
 
   @override
   Widget build(BuildContext context) {
     final studentsAsync = ref.watch(classStudentsProvider(widget.teacherId));
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor, // Sử dụng màu nền từ theme
       appBar: AppBar(
-        title: const Text('Danh sách sinh viên'),
-        backgroundColor: Colors.blue,
+        backgroundColor: Colors.blue[900],
+        elevation: 4.0,
+        title: const Text(
+          'Danh sách sinh viên',
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh, color: Colors.white),
             onPressed: () {
               ref.invalidate(classStudentsProvider(widget.teacherId));
             },
+            tooltip: 'Làm mới danh sách',
           ),
         ],
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.blue[900]!, Colors.blue[700]!],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
       ),
       body: studentsAsync.when(
         data: (students) {
           if (students.isEmpty) {
-            return const Center(child: Text('Không có sinh viên nào.'));
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.people_outline,
+                    size: 48,
+                    color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Không có sinh viên nào',
+                    style: TextStyle(fontSize: 18, color: isDarkMode ? Colors.grey[400] : Colors.grey[600]),
+                  ),
+                ],
+              ),
+            );
           }
 
           return ListView.builder(
+            padding: const EdgeInsets.all(16.0),
             itemCount: students.length,
             itemBuilder: (context, index) {
               final student = students[index];
-              return Card(
-                margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
-                elevation: 4.0,
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: Colors.blue,
-                    child: Text(
-                      student.studentName[0],
-                      style: const TextStyle(color: Colors.white),
+              return FadeInUp(
+                duration: Duration(milliseconds: 500 + (index * 100)),
+                child: Card(
+                  elevation: 6.0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  color: isDarkMode ? Colors.grey[850] : Colors.white,
+                  margin: const EdgeInsets.only(bottom: 12.0),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    leading: CircleAvatar(
+                      backgroundColor: Colors.blue[700],
+                      radius: 24,
+                      child: Text(
+                        student.studentName.isNotEmpty ? student.studentName[0].toUpperCase() : '?',
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                      ),
                     ),
-                  ),
-                  title: Text(
-                    student.studentName,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 4.0),
-                      Text('MSSV: ${student.mssv}'),
-                      Text('Lớp: ${student.className}'),
-                    ],
-                  ),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.info, color: Colors.blue),
-                    onPressed: () {
-                      // Điều hướng tới màn hình StudentCoursesScreen
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => StudentCoursesScreen(studentId: student.studentId),
-                        ),
-                      );
-                    },
+                    title: Text(
+                      student.studentName,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: isDarkMode ? Colors.white : Colors.blue[900],
+                      ),
+                    ),
+                    subtitle: Padding(
+                      padding: const EdgeInsets.only(top: 4.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'MSSV: ${student.mssv}',
+                            style: TextStyle(color: isDarkMode ? Colors.grey[300] : Colors.grey[700]),
+                          ),
+                          Text(
+                            'Lớp: ${student.className}',
+                            style: TextStyle(color: isDarkMode ? Colors.grey[300] : Colors.grey[700]),
+                          ),
+                        ],
+                      ),
+                    ),
+                    trailing: IconButton(
+                      icon: Icon(Icons.info, color: Colors.blue[700]),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => StudentCoursesScreen(studentId: student.studentId),
+                          ),
+                        );
+                      },
+                      tooltip: 'Xem chi tiết học phần',
+                    ),
                   ),
                 ),
               );
             },
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(child: Text('Lỗi: $error')),
+        loading: () => Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.blue[700]!),
+          ),
+        ),
+        error: (error, stack) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline,
+                size: 48,
+                color: isDarkMode ? Colors.red[300] : Colors.red[600],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Lỗi: $error',
+                style: TextStyle(fontSize: 16, color: isDarkMode ? Colors.grey[400] : Colors.grey[600]),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

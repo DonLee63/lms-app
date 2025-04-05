@@ -1,9 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import '../../constants/enum.dart';
-import '../../constants/apilist.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:animate_do/animate_do.dart';
+import '../../constants/enum.dart';
+import '../../constants/apilist.dart';
 import '../../providers/profile_provider.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
@@ -39,7 +40,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   Future<void> _pickImage() async {
     final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
+    if (pickedFile != null && mounted) {
       setState(() {
         _avatarFile = File(pickedFile.path);
       });
@@ -57,32 +58,55 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         await profileNotifier.uploadAndUpdatePhoto(_avatarFile!);
       }
 
-      await profileNotifier.saveProfile();
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Profile updated successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
-
-      Navigator.of(context).pop();
+      try {
+        await profileNotifier.saveProfile();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: const Text('Cập nhật thông tin thành công!'), backgroundColor: Colors.green[700]),
+          );
+          Navigator.of(context).pop();
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Lỗi: $e'), backgroundColor: Colors.red[700]),
+          );
+        }
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final profileState = ref.watch(profileProvider);
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+     backgroundColor: Theme.of(context).scaffoldBackgroundColor, // Sử dụng màu nền từ theme
       appBar: AppBar(
-        title: const Text('Chỉnh sửa thông tin cá nhân'),
+        backgroundColor: Colors.blue[900],
+        elevation: 4.0,
+        title: const Text(
+          'Chỉnh sửa thông tin cá nhân',
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+        ),
         centerTitle: true,
-        backgroundColor: Colors.blue,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.blue[900]!, Colors.blue[700]!],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
       ),
       body: profileState.updateStatus == UpdateStatus.updating
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation(Colors.blue)))
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
               child: Form(
@@ -90,67 +114,97 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Center(
-                      child: GestureDetector(
-                        onTap: _pickImage,
-                        child: CircleAvatar(
-                          radius: 50,
-                          backgroundImage: _avatarFile != null
-                          ? FileImage(_avatarFile!)
-                          : (profileState.profile.photo.startsWith('http') 
-                          ? NetworkImage(profileState.profile.photo) 
-                          : NetworkImage(url_image + profileState.profile.photo)) as ImageProvider,
-                          child: _avatarFile == null
-                              ? const Icon(Icons.camera_alt, size: 50, color: Colors.white54)
-                              : null,
+                    const SizedBox(height: 20),
+                    FadeInUp(
+                      duration: const Duration(milliseconds: 500),
+                      child: Center(
+                        child: GestureDetector(
+                          onTap: _pickImage,
+                          child: Stack(
+                            alignment: Alignment.bottomRight,
+                            children: [
+                              CircleAvatar(
+                                radius: 60,
+                                backgroundColor: Colors.blue[100],
+                                backgroundImage: _avatarFile != null
+                                    ? FileImage(_avatarFile!)
+                                    : (profileState.profile.photo.isNotEmpty
+                                        ? NetworkImage(
+                                            profileState.profile.photo.startsWith('http')
+                                                ? profileState.profile.photo
+                                                : url_image + profileState.profile.photo,
+                                          )
+                                        : null) as ImageProvider?,
+                                child: _avatarFile == null && profileState.profile.photo.isEmpty
+                                    ? Icon(Icons.person, size: 70, color: Colors.blue[800])
+                                    : null,
+                              ),
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue[700],
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.camera_alt, size: 20, color: Colors.white),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 20),
-                    TextFormField(
-                      controller: _fullNameController,
-                      decoration: const InputDecoration(labelText: 'Họ và tên'),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Vui lòng nhập họ và tên';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    TextFormField(
-                      controller: _addressController,
-                      decoration: const InputDecoration(labelText: 'Địa chỉ'),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Vui lòng nhập địa chỉ';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    TextFormField(
-                      controller: _usernameController,
-                      decoration: const InputDecoration(labelText: 'Tên đăng nhập'),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Vui lòng nhập tên đăng nhập';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 30),
-                    Center(
-                      child: ElevatedButton(
-                        onPressed: _saveProfile,
-                        child: const Text('Lưu thông tin'),
-                        style: ElevatedButton.styleFrom(
-                          minimumSize: const Size(double.infinity, 50), backgroundColor: Colors.blue,
-                          textStyle: const TextStyle(fontSize: 18),
-                           foregroundColor: Theme.of(context).colorScheme.onPrimary, // Màu chữ
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                    const SizedBox(height: 24),
+                    FadeInUp(
+                      duration: const Duration(milliseconds: 600),
+                      child: Card(
+                        elevation: 6.0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        color: isDarkMode ? Colors.grey[850] : Colors.white,
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildTextField(
+                                controller: _fullNameController,
+                                label: 'Họ và tên',
+                                icon: Icons.person,
+                                validator: (value) => value == null || value.isEmpty ? 'Vui lòng nhập họ và tên' : null,
+                                isDarkMode: isDarkMode,
+                              ),
+                              const SizedBox(height: 16),
+                              _buildTextField(
+                                controller: _addressController,
+                                label: 'Địa chỉ',
+                                icon: Icons.location_on,
+                                validator: (value) => value == null || value.isEmpty ? 'Vui lòng nhập địa chỉ' : null,
+                                isDarkMode: isDarkMode,
+                              ),
+                              const SizedBox(height: 16),
+                              _buildTextField(
+                                controller: _usernameController,
+                                label: 'Tên đăng nhập',
+                                icon: Icons.account_circle,
+                                validator: (value) => value == null || value.isEmpty ? 'Vui lòng nhập tên đăng nhập' : null,
+                                isDarkMode: isDarkMode,
+                              ),
+                            ],
                           ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    FadeInUp(
+                      duration: const Duration(milliseconds: 700),
+                      child: ElevatedButton.icon(
+                        onPressed: _saveProfile,
+                        icon: const Icon(Icons.save, size: 18),
+                        label: const Text('Lưu thông tin'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue[700],
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size(double.infinity, 50),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
                       ),
                     ),
@@ -158,6 +212,29 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 ),
               ),
             ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    String? Function(String?)? validator,
+    required bool isDarkMode,
+  }) {
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(color: isDarkMode ? Colors.grey[400] : Colors.grey[700]),
+        prefixIcon: Icon(icon, color: isDarkMode ? Colors.grey[300] : Colors.blue[700]),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        filled: true,
+        fillColor: isDarkMode ? Colors.grey[800] : Colors.grey[100],
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      ),
+      style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+      validator: validator,
     );
   }
 }

@@ -7,6 +7,8 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:open_file/open_file.dart';
+import 'package:animate_do/animate_do.dart'; // Thêm thư viện animate_do để tạo animation
+import 'package:intl/intl.dart'; // Thêm thư viện intl để định dạng ngày tháng
 
 class StudentNotificationsScreen extends ConsumerWidget {
   final int studentId;
@@ -62,7 +64,15 @@ class StudentNotificationsScreen extends ConsumerWidget {
     // Kiểm tra URL trước khi tải
     if (url == null || url.isEmpty || !Uri.parse(url).isAbsolute) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('File không tồn tại hoặc URL không hợp lệ')),
+        SnackBar(
+          content: const Text('File không tồn tại hoặc URL không hợp lệ'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16.0),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+        ),
       );
       return;
     }
@@ -77,13 +87,23 @@ class StudentNotificationsScreen extends ConsumerWidget {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const AlertDialog(
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Đang tải file...'),
+            CircularProgressIndicator(
+              color: Colors.blue[800],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Đang tải file: $fileName',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
+              ),
+            ),
           ],
         ),
       ),
@@ -137,6 +157,12 @@ class StudentNotificationsScreen extends ConsumerWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Đã tải file về: $filePath'),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16.0),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8.0),
+          ),
           action: SnackBarAction(
             label: 'Mở file',
             onPressed: () async {
@@ -144,7 +170,15 @@ class StudentNotificationsScreen extends ConsumerWidget {
               final result = await OpenFile.open(filePath);
               if (result.type != ResultType.done) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Không thể mở file: ${result.message}')),
+                  SnackBar(
+                    content: Text('Không thể mở file: ${result.message}'),
+                    backgroundColor: Colors.red,
+                    behavior: SnackBarBehavior.floating,
+                    margin: const EdgeInsets.all(16.0),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                  ),
                 );
               }
             },
@@ -155,7 +189,15 @@ class StudentNotificationsScreen extends ConsumerWidget {
       // Đóng dialog tiến trình nếu có lỗi
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Lỗi khi tải file: $e')),
+        SnackBar(
+          content: Text('Lỗi khi tải file: $e'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16.0),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+        ),
       );
     }
   }
@@ -164,58 +206,250 @@ class StudentNotificationsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Lắng nghe studentNotificationsProvider
     final notificationsAsync = ref.watch(studentNotificationsProvider(studentId));
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark; // Kiểm tra chế độ Dark Mode
 
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor, // Sử dụng màu nền từ theme
       appBar: AppBar(
-        title: const Text('Thông báo'),
+        backgroundColor: Colors.blue[800], // Màu xanh đậm chuyên nghiệp
+        elevation: 0,
+        title: const Text(
+          'Thông báo',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.white, // Màu chữ trắng để luôn dễ đọc
+          ),
+        ),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            onPressed: () {
+              ref.refresh(studentNotificationsProvider(studentId));
+            },
+          ),
+        ],
       ),
       body: notificationsAsync.when(
         data: (notifications) {
           if (notifications.isEmpty) {
-            return const Center(child: Text('Không có thông báo nào'));
+            return Center(
+              child: Text(
+                'Không có thông báo nào',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: isDarkMode ? Colors.grey[400] : Colors.grey[600], // Màu chữ điều chỉnh
+                ),
+              ),
+            );
           }
 
           return ListView.builder(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
             itemCount: notifications.length,
             itemBuilder: (context, index) {
               final notification = notifications[index];
               final fileName = notification.filePath.split('/').last; // Lấy tên file từ file_path
-              return ListTile(
-                title: Text(notification.title),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Giảng viên: ${notification.teacherName}'),
-                    Text('Ngày gửi: ${notification.createdAt.toString()}'),
-                  ],
-                ),
-                trailing: IconButton(
-                  icon: const Icon(Icons.download),
-                  onPressed: () async {
-                    await downloadFile(notification.downloadUrl, fileName, context);
-                  },
+              final formattedDate = DateFormat('dd/MM/yyyy HH:mm').format(notification.createdAt); // Định dạng ngày
+
+              return FadeInUp(
+                duration: Duration(milliseconds: 600 + (index * 100)),
+                child: Card(
+                  margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+                  elevation: 6.0,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16.0),
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          isDarkMode ? Colors.grey[800]! : Colors.blue[50]!, // Gradient điều chỉnh theo chế độ
+                          isDarkMode ? Colors.grey[900]! : Colors.white,
+                        ],
+                      ),
+                    ),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                      title: Text(
+                        notification.title,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: isDarkMode ? Colors.white : Colors.blue[900], // Màu chữ điều chỉnh
+                        ),
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Giảng viên: ${notification.teacherName}',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: isDarkMode ? Colors.grey[400] : Colors.grey[600], // Màu chữ điều chỉnh
+                            ),
+                          ),
+                          Text(
+                            'Ngày gửi: $formattedDate',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: isDarkMode ? Colors.grey[400] : Colors.grey[600], // Màu chữ điều chỉnh
+                            ),
+                          ),
+                        ],
+                      ),
+                      trailing: ScaleTransitionButton(
+                        onPressed: () async {
+                          await downloadFile(notification.downloadUrl, fileName, context);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.blue[600]!,
+                                Colors.blue[800]!,
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.download,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Tải file',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               );
             },
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(
+          child: CircularProgressIndicator(
+            color: Colors.blue,
+          ),
+        ),
         error: (error, stackTrace) => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(error.toString()),
+              Text(
+                error.toString(),
+                style: TextStyle(
+                  fontSize: 16,
+                  color: isDarkMode ? Colors.grey[400] : Colors.grey[600], // Màu chữ điều chỉnh
+                ),
+              ),
               const SizedBox(height: 16),
-              ElevatedButton(
+              ScaleTransitionButton(
                 onPressed: () {
-                  // Làm mới provider để thử lại
                   ref.refresh(studentNotificationsProvider(studentId));
                 },
-                child: const Text('Thử lại'),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.blue[600]!,
+                        Colors.blue[800]!,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  child: const Text(
+                    'Thử lại',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+// Widget tùy chỉnh để thêm hiệu ứng scale khi nhấn
+class ScaleTransitionButton extends StatefulWidget {
+  final VoidCallback onPressed;
+  final Widget child;
+
+  const ScaleTransitionButton({
+    super.key,
+    required this.onPressed,
+    required this.child,
+  });
+
+  @override
+  _ScaleTransitionButtonState createState() => _ScaleTransitionButtonState();
+}
+
+class _ScaleTransitionButtonState extends State<ScaleTransitionButton> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) {
+        _controller.forward();
+      },
+      onTapUp: (_) {
+        _controller.reverse();
+        widget.onPressed();
+      },
+      onTapCancel: () {
+        _controller.reverse();
+      },
+      child: ScaleTransition(
+        scale: _scaleAnimation,
+        child: widget.child,
       ),
     );
   }

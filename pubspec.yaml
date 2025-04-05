@@ -64,7 +64,10 @@ dependencies:
   permission_handler: ^11.0.0 # Để yêu cầu quyền lưu trữ trên Android
   flutter_carousel_widget: ^2.2.0
   open_file: ^3.5.3
-  
+  fl_chart: ^0.68.0
+  badges: ^3.1.2  # Thêm dòng này
+  google_fonts: ^6.2.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

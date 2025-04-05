@@ -124,3 +124,14 @@ final studentAverageScoresProvider = FutureProvider.family<Map<String, dynamic>,
   final repository = ref.read(exerciseRepositoryProvider);
   return repository.getStudentAverageScores(hocphanId);
 });
+
+final deleteQuestionProvider = FutureProvider.family<void, int>((ref, questionId) async {
+  final repository = ref.read(exerciseRepositoryProvider);
+  await repository.deleteQuestion(questionId);
+});
+
+// Provider để xóa câu hỏi tự luận
+final deleteEssayQuestionProvider = FutureProvider.family<void, int>((ref, questionId) async {
+  final repository = ref.read(exerciseRepositoryProvider);
+  await repository.deleteEssayQuestion(questionId);
+});
