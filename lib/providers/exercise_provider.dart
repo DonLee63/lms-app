@@ -135,3 +135,28 @@ final deleteEssayQuestionProvider = FutureProvider.family<void, int>((ref, quest
   final repository = ref.read(exerciseRepositoryProvider);
   await repository.deleteEssayQuestion(questionId);
 });
+
+// Provider for fetching multiple-choice quiz by ID
+final quizByIdProvider = FutureProvider.family<BodeTracNghiem, int>((ref, quizId) async {
+  final repository = ref.read(exerciseRepositoryProvider);
+  return repository.getQuizById(quizId);
+});
+
+
+// Provider for updating multiple-choice quiz
+final updateQuizProvider = FutureProvider.family<BodeTracNghiem, BodeTracNghiem>((ref, quiz) async {
+  final repository = ref.read(exerciseRepositoryProvider);
+  return repository.updateQuiz(quiz);
+});
+
+// Provider for fetching essay quiz by ID
+final essayQuizByIdProvider = FutureProvider.family<BodeTuluan, int>((ref, quizId) async {
+  final repository = ref.read(exerciseRepositoryProvider);
+  return repository.getEssayQuizById(quizId);
+});
+
+// Provider for updating essay quiz
+final updateEssayQuizProvider = FutureProvider.family<BodeTuluan, BodeTuluan>((ref, quiz) async {
+  final repository = ref.read(exerciseRepositoryProvider);
+  return repository.updateEssayQuiz(quiz);
+});

@@ -1,53 +1,50 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:study_management_app/models/teaching_content.dart';
 import 'package:study_management_app/providers/teaching_content_provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:open_file/open_file.dart';
 import 'package:animate_do/animate_do.dart';
-import 'package:intl/intl.dart'; // Added for date formatting
+import 'package:intl/intl.dart';
+import 'package:study_management_app/screen/TeacherPage/teacher_upload_content_screen.dart';
 
-class StudentTeachingContentScreen extends ConsumerStatefulWidget {
-  final int studentId;
+class TeacherTeachingContentScreen extends ConsumerStatefulWidget {
+  final int teacherId;
   final int phancongId;
-  final String courseTitle;
 
-  const StudentTeachingContentScreen({
-    Key? key,
-    required this.studentId,
+  const TeacherTeachingContentScreen({
+    super.key,
+    required this.teacherId,
     required this.phancongId,
-    required this.courseTitle,
-  }) : super(key: key);
+  });
 
   @override
-  ConsumerState<StudentTeachingContentScreen> createState() => _StudentTeachingContentScreenState();
+  ConsumerState<TeacherTeachingContentScreen> createState() => _TeacherTeachingContentScreenState();
 }
 
-class _StudentTeachingContentScreenState extends ConsumerState<StudentTeachingContentScreen> {
-  late Future<List<TeachingContent>> _teachingContentFuture;
+class _TeacherTeachingContentScreenState extends ConsumerState<TeacherTeachingContentScreen> {
+  late Future<List<dynamic>> _teachingContentFuture;
 
   @override
   void initState() {
     super.initState();
-    _teachingContentFuture = ref.read(teachingContentRepositoryProvider).getTeachingContent(
-      widget.studentId,
-      widget.phancongId,
-    );
+    _teachingContentFuture = ref.read(teachingContentForTeacherProvider({
+      'teacher_id': widget.teacherId,
+      'phancong_id': widget.phancongId,
+    }).future);
   }
 
   Future<void> _refresh() async {
     setState(() {
-      _teachingContentFuture = ref.read(teachingContentRepositoryProvider).getTeachingContent(
-        widget.studentId,
-        widget.phancongId,
-      );
+      _teachingContentFuture = ref.read(teachingContentForTeacherProvider({
+        'teacher_id': widget.teacherId,
+        'phancong_id': widget.phancongId,
+      }).future);
     });
   }
 
-  // Permission request logic (same as StudentNotificationsScreen)
   Future<bool> _requestStoragePermission(BuildContext context) async {
     PermissionStatus status = await Permission.photos.request();
 
@@ -87,9 +84,8 @@ class _StudentTeachingContentScreenState extends ConsumerState<StudentTeachingCo
     return false;
   }
 
-  // File download logic (aligned with StudentNotificationsScreen)
   Future<void> _downloadFile(String? url, String fileName, BuildContext context) async {
-    print('Bắt đầu tải file: $url'); // Debug log
+    print('Bắt đầu tải file: $url');
     if (url == null || url.isEmpty || !Uri.parse(url).isAbsolute) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -222,21 +218,17 @@ class _StudentTeachingContentScreenState extends ConsumerState<StudentTeachingCo
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue[800], // Consistent with Notifications
+        backgroundColor: Colors.blue[800],
         elevation: 0,
-        title: Text(
-          widget.courseTitle,
-          style: const TextStyle(
+        title: const Text(
+          'Tài liệu học tập',
+          style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
             color: Colors.white,
           ),
         ),
         centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh, color: Colors.white),
@@ -252,13 +244,13 @@ class _StudentTeachingContentScreenState extends ConsumerState<StudentTeachingCo
             end: Alignment.bottomCenter,
             colors: isDarkMode
                 ? [Colors.grey[900]!, Colors.grey[850]!]
-                : [Colors.blue[50]!, Colors.white], // Aligned gradient
+                : [Colors.blue[50]!, Colors.white],
           ),
         ),
         child: RefreshIndicator(
           onRefresh: _refresh,
           color: Colors.blue[800],
-          child: FutureBuilder<List<TeachingContent>>(
+          child: FutureBuilder<List<dynamic>>(
             future: _teachingContentFuture,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
@@ -319,8 +311,8 @@ class _StudentTeachingContentScreenState extends ConsumerState<StudentTeachingCo
                 );
               }
 
-              final contents = snapshot.data ?? [];
-              if (contents.isEmpty) {
+              final teachingContents = snapshot.data ?? [];
+              if (teachingContents.isEmpty) {
                 return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -347,11 +339,10 @@ class _StudentTeachingContentScreenState extends ConsumerState<StudentTeachingCo
               return ListView.builder(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(16.0),
-                itemCount: contents.length,
+                itemCount: teachingContents.length,
                 itemBuilder: (context, index) {
-                  final content = contents[index];
-                  final fileName = content.resources.split('/').last;
-                  // Assuming createdAt exists in TeachingContent model
+                  final content = teachingContents[index];
+                  final fileName = content.fileUrl?.split('/').last ?? 'N/A';
                   final formattedDate = content.createdAt != null
                       ? DateFormat('dd/MM/yyyy HH:mm').format(content.createdAt!)
                       : 'N/A';
@@ -414,44 +405,46 @@ class _StudentTeachingContentScreenState extends ConsumerState<StudentTeachingCo
                               ),
                             ],
                           ),
-                          trailing: ScaleTransitionButton(
-                            onPressed: () async {
-                              await _downloadFile(content.downloadUrl, fileName, context);
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Colors.blue[600]!,
-                                    Colors.blue[800]!,
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                                borderRadius: BorderRadius.circular(8.0),
-                              ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.download,
-                                    color: Colors.white,
-                                    size: 20,
-                                  ),
-                                  SizedBox(width: 8),
-                                  Text(
-                                    'Tải file',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
+                          trailing: content.downloadUrl != null
+                              ? ScaleTransitionButton(
+                                  onPressed: () async {
+                                    await _downloadFile(content.downloadUrl, fileName, context);
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          Colors.blue[600]!,
+                                          Colors.blue[800]!,
+                                        ],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      ),
+                                      borderRadius: BorderRadius.circular(8.0),
+                                    ),
+                                    child: const Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.download,
+                                          color: Colors.white,
+                                          size: 20,
+                                        ),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          'Tải file',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                ],
-                              ),
-                            ),
-                          ),
+                                )
+                              : null,
                         ),
                       ),
                     ),
@@ -462,11 +455,26 @@ class _StudentTeachingContentScreenState extends ConsumerState<StudentTeachingCo
           ),
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => TeacherUploadContentScreen(
+                teacherId: widget.teacherId,
+                phancongId: widget.phancongId,
+              ),
+            ),
+          );
+        },
+        backgroundColor: Colors.blue[800],
+        child: const Icon(Icons.upload_file, color: Colors.white),
+        tooltip: 'Tải lên tài liệu',
+      ),
     );
   }
 }
 
-// ScaleTransitionButton (copied from StudentNotificationsScreen)
 class ScaleTransitionButton extends StatefulWidget {
   final VoidCallback onPressed;
   final Widget child;

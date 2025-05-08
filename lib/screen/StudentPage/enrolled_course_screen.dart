@@ -52,7 +52,7 @@ class EnrolledCourseScreen extends ConsumerWidget {
             children: [
               FadeInDown(
                 duration: const Duration(milliseconds: 600),
-                child: _buildTotalTinChi(context, enrollments), // Truyền context vào đây
+                child: _buildTotalTinChi(context, enrollments),
               ),
               Divider(
                 color: isDarkMode ? Colors.grey[600] : Colors.grey[300],
@@ -80,7 +80,7 @@ class EnrolledCourseScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildTotalTinChi(BuildContext context, List<Enrollment> enrollments) { // Thêm context làm tham số
+  Widget _buildTotalTinChi(BuildContext context, List<Enrollment> enrollments) {
     final totalTinChi = enrollments.fold<int>(0, (sum, enrollment) => sum + enrollment.tinchi);
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
@@ -186,15 +186,19 @@ class EnrolledCourseScreen extends ConsumerWidget {
                       'Trạng thái: ${enrollment.status}',
                       style: TextStyle(
                         fontSize: 14,
-                        color: enrollment.status == 'Đã duyệt'
+                        color: enrollment.status == 'success'
                             ? Colors.green
-                            : (enrollment.status == 'Chưa duyệt' ? Colors.orange : Colors.red),
+                            : (enrollment.status == 'pending'
+                                ? Colors.orange
+                                : (enrollment.status == 'finished'
+                                    ? Colors.blue
+                                    : Colors.red)),
                       ),
                     ),
                   ],
                 ),
                 trailing: ScaleTransitionButton(
-                  onPressed: () => _confirmCancelEnrollment(context, ref, enrollment),
+                  onPressed: () => _checkAndConfirmCancelEnrollment(context, ref, enrollment),
                   child: Icon(
                     Icons.delete,
                     color: Colors.red,
@@ -209,8 +213,80 @@ class EnrolledCourseScreen extends ConsumerWidget {
     );
   }
 
-  void _confirmCancelEnrollment(BuildContext context, WidgetRef ref, Enrollment enrollment) {
+  Future<bool> _hasTimetableForCourse(WidgetRef ref, Enrollment enrollment) async {
+    try {
+      final timetable = await ref.watch(timetableProvider(studentId).future);
+      return timetable.any((item) =>
+          item['class_course'] == enrollment.classCourse || item['title'] == enrollment.title);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  void _checkAndConfirmCancelEnrollment(BuildContext context, WidgetRef ref, Enrollment enrollment) async {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    // Kiểm tra trạng thái và thời khóa biểu
+    final hasTimetable = await _hasTimetableForCourse(ref, enrollment);
+    final canCancel = enrollment.status == 'pending' && !hasTimetable;
+
+    if (!canCancel) {
+      String message;
+      if (enrollment.status == 'success' && hasTimetable) {
+        message = 'Học phần "${enrollment.title}" đã được xác nhận (success) và đã có thời khóa biểu, không thể hủy.';
+      } else if (enrollment.status == 'success') {
+        message = 'Học phần "${enrollment.title}" đã được xác nhận (success), không thể hủy.';
+      } else if (hasTimetable) {
+        message = 'Học phần "${enrollment.title}" đã có thời khóa biểu, không thể hủy.';
+      } else {
+        message = 'Học phần "${enrollment.title}" không thể hủy do trạng thái không phù hợp.';
+      }
+
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+            title: Text(
+              'Không thể hủy',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: isDarkMode ? Colors.white : Colors.black,
+              ),
+            ),
+            content: Text(
+              message,
+              style: TextStyle(
+                fontSize: 16,
+                color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+              ),
+            ),
+            actions: [
+              ScaleTransitionButton(
+                onPressed: () => Navigator.pop(context),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  child: Text(
+                    'Đóng',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+      return;
+    }
 
     showDialog(
       context: context,

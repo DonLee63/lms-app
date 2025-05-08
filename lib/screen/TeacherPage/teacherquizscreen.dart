@@ -9,7 +9,10 @@ import 'package:study_management_app/screen/TeacherPage/createquestionscreen.dar
 import 'package:study_management_app/screen/TeacherPage/createquizscreen.dart';
 import 'package:study_management_app/screen/TeacherPage/createessayquestionscreen.dart';
 import 'package:study_management_app/screen/TeacherPage/createessayquizscreen.dart';
+import 'package:study_management_app/screen/TeacherPage/edit_essay_quiz_screen.dart';
+import 'package:study_management_app/screen/TeacherPage/editquizscreen.dart';
 import 'package:study_management_app/screen/TeacherPage/teacher_assignments_screen.dart';
+// import 'package:study_management_app/screen/TeacherPage/edit_quiz_screen.dart'; // Import EditQuizScreen
 
 class TeacherQuizScreen extends ConsumerStatefulWidget {
   final int hocphanId;
@@ -140,7 +143,7 @@ class _TeacherQuizScreenState extends ConsumerState<TeacherQuizScreen> {
 
     if (_userId == null) {
       return Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor, // Sử dụng màu nền từ theme
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: Center(
           child: CircularProgressIndicator(
             valueColor: AlwaysStoppedAnimation<Color>(Colors.blue[700]!),
@@ -150,12 +153,12 @@ class _TeacherQuizScreenState extends ConsumerState<TeacherQuizScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor, // Sử dụng màu nền từ theme
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.blue[900],
         elevation: 4.0,
         title: const Text(
-          "Quản lý bài tập}",
+          "Quản lý bài tập",
           style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
         ),
         centerTitle: true,
@@ -316,7 +319,7 @@ class _TeacherQuizScreenState extends ConsumerState<TeacherQuizScreen> {
                     );
                   }
                   return ListView.builder(
-                    itemCount: quizzes.length + 1, // Thêm 1 để hiển thị nút "Xem bài đã giao"
+                    itemCount: quizzes.length + 1,
                     itemBuilder: (context, index) {
                       if (index == 0) {
                         return FadeInUp(
@@ -439,6 +442,41 @@ class _TeacherQuizScreenState extends ConsumerState<TeacherQuizScreen> {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.end,
                                   children: [
+                                    ElevatedButton.icon(
+                                      onPressed: () {
+                                        if (quiz.type == 'trac_nghiem') {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => EditQuizScreen(
+                                                quizId: quiz.id,
+                                                hocphanId: widget.hocphanId,
+                                              ),
+                                            ),
+                                          );
+                                        } else {
+                                          // Uncomment if EditEssayQuizScreen is created:
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => EditEssayQuizScreen(
+                                                quizId: quiz.id,
+                                                hocphanId: widget.hocphanId,
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      },
+                                      icon: const Icon(Icons.edit, size: 18),
+                                      label: const Text("Sửa"),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.blue[700],
+                                        foregroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                        elevation: 4.0,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
                                     ElevatedButton.icon(
                                       onPressed: () => _assignQuiz(context, quiz),
                                       icon: const Icon(Icons.send, size: 18),

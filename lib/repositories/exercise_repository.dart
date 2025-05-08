@@ -5,6 +5,7 @@ import '../models/trac_nghiem_question.dart';
 import '../models/essay_question.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:study_management_app/models/quiz.dart'; // Import model Quiz
+import 'package:flutter/material.dart';
 
 class ExerciseRepository {
   final String baseUrl = base;
@@ -486,6 +487,138 @@ Future<void> updateSubmissionScore(int userId, int submissionId, double score) a
       }
     } catch (e) {
       throw Exception('Lỗi: $e');
+    }
+  }
+
+// Fetch multiple-choice quiz by ID
+  Future<BodeTracNghiem> getQuizById(int quizId) async {
+    final response = await http.get(
+      Uri.parse('$base/show-quizzes/$quizId'),
+      headers: {'Accept': 'application/json'},
+    );
+
+    debugPrint('Response status: ${response.statusCode}');
+    debugPrint('Response body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+      debugPrint('Parsed JSON: $json');
+      if (json['success'] == true) {
+        final quizData = json['data'];
+        debugPrint('Quiz data for parsing: $quizData');
+        final quiz = BodeTracNghiem.fromJson(quizData);
+        debugPrint('Parsed quiz: title=${quiz.title}, questions=${quiz.questions}');
+        return quiz;
+      } else {
+        throw Exception(json['message']);
+      }
+    } else if (response.statusCode == 404) {
+      throw Exception('Không tìm thấy bộ đề trắc nghiệm');
+    } else {
+      throw Exception('Lỗi khi tải bộ đề trắc nghiệm: ${response.statusCode}');
+    }
+  }
+
+  // Fetch essay quiz by ID
+  Future<BodeTuluan> getEssayQuizById(int quizId) async {
+    final response = await http.get(
+      Uri.parse('$base/show-essay-quizzes/$quizId'),
+      headers: {'Accept': 'application/json'},
+    );
+
+    print('Response status: ${response.statusCode}'); // Debug status code
+    print('Response body: ${response.body}'); // Debug response body
+
+   if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+      debugPrint('Parsed JSON: $json');
+      if (json['success'] == true) {
+        final quizData = json['data'];
+        debugPrint('Quiz data for parsing: $quizData');
+        final quiz = BodeTuluan.fromJson(quizData);
+        debugPrint('Parsed quiz: title=${quiz.title}, questions=${quiz.questions}');
+        return quiz;
+      } else {
+        throw Exception(json['message']);
+      }
+    } else if (response.statusCode == 404) {
+      throw Exception('Không tìm thấy bộ đề trắc nghiệm');
+    } else {
+      throw Exception('Lỗi khi tải bộ đề trắc nghiệm: ${response.statusCode}');
+    }
+  }
+
+  // Update multiple-choice quiz
+  Future<BodeTracNghiem> updateQuiz(BodeTracNghiem quiz) async {
+    final response = await http.put(
+      Uri.parse('$base/edit-quizzes/${quiz.id}'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode({
+        'title': quiz.title,
+        'hocphan_id': quiz.hocphanId,
+        'start_time': quiz.startTime.toIso8601String(),
+        'end_time': quiz.endTime.toIso8601String(),
+        'time': quiz.time,
+        'total_points': quiz.totalPoints,
+        'questions': quiz.questions,
+        'user_id': quiz.userId,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+      if (json['success'] == true) {
+        return BodeTracNghiem.fromJson(json['data']);
+      } else {
+        throw Exception(json['message']);
+      }
+    } else if (response.statusCode == 422) {
+      final json = jsonDecode(response.body);
+      throw Exception('Validation failed: ${json['errors'].toString()}');
+    } else if (response.statusCode == 404) {
+      throw Exception('Không tìm thấy bộ đề trắc nghiệm');
+    } else {
+      throw Exception('Lỗi khi cập nhật bộ đề trắc nghiệm: ${response.statusCode}');
+    }
+  }
+
+  // Update essay quiz
+  Future<BodeTuluan> updateEssayQuiz(BodeTuluan quiz) async {
+    final response = await http.put(
+      Uri.parse('$base/edit-essay-quizzes/${quiz.id}'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode({
+        'title': quiz.title,
+        'hocphan_id': quiz.hocphanId,
+        'start_time': quiz.startTime.toIso8601String(),
+        'end_time': quiz.endTime.toIso8601String(),
+        'time': quiz.time,
+        'total_points': quiz.totalPoints,
+        'questions': quiz.questions,
+        'user_id': quiz.userId,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+      if (json['success'] == true) {
+        return BodeTuluan.fromJson(json['data']);
+      } else {
+        throw Exception(json['message']);
+      }
+    } else if (response.statusCode == 422) {
+      final json = jsonDecode(response.body);
+      throw Exception('Validation failed: ${json['errors'].toString()}');
+    } else if (response.statusCode == 404) {
+      throw Exception('Không tìm thấy bộ đề tự luận');
+    } else {
+      throw Exception('Lỗi khi cập nhật bộ đề tự luận: ${response.statusCode}');
     }
   }
 }

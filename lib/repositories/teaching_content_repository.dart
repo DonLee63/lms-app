@@ -62,4 +62,43 @@ class TeachingContentRepository {
       throw Exception('Failed to load teaching content: ${response.statusCode} - ${response.body}');
     }
   }
+  Future<List<TeachingContent>> getTeachingContentForTeacher(int teacherId, int phancongId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$base/get-teaching-content-teacher'), // Base URL được định nghĩa trong apilist.dart
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({
+          'teacher_id': teacherId,
+          'phancong_id': phancongId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body);
+        if (jsonData['success'] == true) {
+          // Nếu không có nội dung, trả về danh sách rỗng
+          if (jsonData['data'].isEmpty) {
+            return [];
+          }
+          // Chuyển đổi dữ liệu JSON thành danh sách TeachingContent
+          return (jsonData['data'] as List)
+              .map((item) => TeachingContent.fromJson(item))
+              .toList();
+        } else {
+          throw Exception(jsonData['message'] ?? 'Không thể lấy danh sách tài liệu học tập');
+        }
+      } else if (response.statusCode == 403) {
+        final jsonData = jsonDecode(response.body);
+        throw Exception(jsonData['message'] ?? 'Giảng viên không có quyền truy cập học phần này');
+      } else {
+        final jsonData = jsonDecode(response.body);
+        throw Exception(jsonData['message'] ?? 'Lỗi không xác định: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Lỗi khi gọi API: $e');
+    }
+  }
 }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:study_management_app/providers/teaching_content_provider.dart';
+import 'package:study_management_app/screen/TeacherPage/teacher_teaching_content_screen.dart';
 
 class TeacherUploadContentScreen extends ConsumerStatefulWidget {
   final int teacherId;
@@ -104,6 +105,24 @@ class _TeacherUploadContentScreenState extends ConsumerState<TeacherUploadConten
           icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
           onPressed: () => Navigator.of(context).pop(),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.list, color: Colors.white),
+            tooltip: 'Xem danh sách tài liệu',
+            onPressed: () {
+              // Điều hướng tới TeacherTeachingContentScreen
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => TeacherTeachingContentScreen(
+                    teacherId: widget.teacherId,
+                    phancongId: widget.phancongId,
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(

@@ -16,6 +16,8 @@ import 'package:study_management_app/screen/TeacherPage/teacher_hocphan_screen.d
 import 'package:study_management_app/screen/TeacherPage/teacher_info_screen.dart';
 import 'package:study_management_app/screen/TeacherPage/teacher_screen.dart';
 import 'package:study_management_app/screen/StudentPage/exam_schedule_screen.dart';
+import 'package:study_management_app/screen/TeacherPage/teacher_upload_content_screen.dart';
+import 'package:study_management_app/screen/TeacherPage/teachercontentlistscreen.dart';
 import 'package:study_management_app/screen/home_screen.dart';
 import 'package:study_management_app/screen/notifications_screen.dart';
 import 'package:study_management_app/screen/policy_screen.dart';
@@ -69,6 +71,8 @@ class AppRoutes {
   static const String enterScores = '/enterScores';
   static const String teacherhocphan = '/teacherhocphan';
   static const String studentscorecourse = '/studentscorecourse';
+  static const String contentList = '/contentList';
+  static const String uploadContent = '/uploadContent';
 
   static Map<String, WidgetBuilder> routes = {
     splash: (context) => SplashScreen(),
@@ -142,6 +146,18 @@ class AppRoutes {
     } else {
       return const HomeScreen();
     }
+    
+  },
+  uploadContent: (context) {
+    final args = ModalRoute.of(context)!.settings.arguments;
+    if (args != null && args is Map<String, int>) {
+      final int teacherId = args['teacherId'] ?? 0;  // Lấy teacherId từ Map
+      final int phancongId = args['phancongId'] ?? 0;  // Lấy phancongId từ Map
+      return TeacherUploadContentScreen(teacherId: teacherId, phancongId: phancongId);
+    } else {
+      return const HomeScreen();
+    }
+    
   },
 
     editstudent: (context) {
@@ -166,6 +182,14 @@ class AppRoutes {
       if (ModalRoute.of(context)!.settings.arguments != null) {
         final teacherId = ModalRoute.of(context)!.settings.arguments as int;
         return PhanCongScreen(teacherId: teacherId);
+      } else {
+        return const HomeScreen();
+      }
+    },
+    contentList: (context) {
+      if (ModalRoute.of(context)!.settings.arguments != null) {
+        final teacherId = ModalRoute.of(context)!.settings.arguments as int;
+        return Teachercontentlistscreen(teacherId: teacherId);
       } else {
         return const HomeScreen();
       }

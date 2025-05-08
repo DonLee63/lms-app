@@ -317,6 +317,21 @@ class _HomeScreen extends ConsumerState<HomeScreen> with SingleTickerProviderSta
                             index: 0,
                           ),
                           _buildCategoryCard(
+                            'Tài liệu học tập',
+                            Icons.grid_view, // Icon giống hình
+                            const Color.fromARGB(255, 243, 33, 75), // Màu giống hình
+                            () {
+                              if (_teacherId != null) {
+                                Navigator.of(context).pushNamed(AppRoutes.contentList, arguments: _teacherId);
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Không tìm thấy teacher_id')),
+                                );
+                              }
+                            },
+                            index: 0,
+                          ),
+                          _buildCategoryCard(
                             'Lớp học',
                             Icons.bookmark, // Icon giống hình
                             Colors.green, // Màu giống hình

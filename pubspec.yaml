@@ -67,6 +67,7 @@ dependencies:
   fl_chart: ^0.68.0
   badges: ^3.1.2  # Thêm dòng này
   google_fonts: ^6.2.1
+  device_info_plus: ^9.0.0
 
 dev_dependencies:
   flutter_test:

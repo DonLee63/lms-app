@@ -21,3 +21,10 @@ final sendTeachingContentProvider = FutureProvider.family<Map<String, dynamic>, 
     filePath: params['file_path'] as String,
   );
 });
+
+final teachingContentForTeacherProvider = FutureProvider.family<List<TeachingContent>, Map<String, int>>((ref, params) async {
+  final repository = ref.read(teachingContentRepositoryProvider);
+  final teacherId = params['teacher_id']!;
+  final phancongId = params['phancong_id']!;
+  return await repository.getTeachingContentForTeacher(teacherId, phancongId);
+});

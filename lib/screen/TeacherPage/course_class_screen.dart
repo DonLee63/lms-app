@@ -320,25 +320,6 @@ class _CourseClassScreenState extends ConsumerState<CourseClassScreen> {
                   },
                 ),
                 const SizedBox(height: 12),
-                FloatingActionButton.extended(
-                  heroTag: "upload_content",
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => TeacherUploadContentScreen(
-                          teacherId: widget.teacherId,
-                          phancongId: widget.phancongId,
-                        ),
-                      ),
-                    );
-                  },
-                  label: const Text("Tải lên tài liệu"),
-                  icon: const Icon(Icons.upload_file, color: Colors.white),
-                  backgroundColor: Colors.blue[700],
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                const SizedBox(height: 12),
               ],
               FloatingActionButton(
                 heroTag: "main",

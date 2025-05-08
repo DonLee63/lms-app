@@ -62,6 +62,7 @@ class StudentNotificationsScreen extends ConsumerWidget {
   // Hàm tải file về thiết bị
   Future<void> downloadFile(String? url, String fileName, BuildContext context) async {
     // Kiểm tra URL trước khi tải
+     print('Bắt đầu tải file: $url'); // Log để debug
     if (url == null || url.isEmpty || !Uri.parse(url).isAbsolute) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -317,7 +318,7 @@ class StudentNotificationsScreen extends ConsumerWidget {
                             ),
                             borderRadius: BorderRadius.circular(8.0),
                           ),
-                          child: Row(
+                          child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
@@ -325,7 +326,7 @@ class StudentNotificationsScreen extends ConsumerWidget {
                                 color: Colors.white,
                                 size: 20,
                               ),
-                              const SizedBox(width: 8),
+                              SizedBox(width: 8),
                               Text(
                                 'Tải file',
                                 style: TextStyle(

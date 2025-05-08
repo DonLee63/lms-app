@@ -1,12 +1,13 @@
 
 import '../models/profile.dart';
 
-// final String base = 'http://127.0.0.1:8000/api/v1';
+final String base = 'https://lms.itcctv-soft.com/api/v1';
 // final String base = 'http://localhost:8000/api/v1';
 // final String base = 'http://10.0.2.2:8000/api/v1';
 // final String base = 'http://192.168.88.162:8000/api/v1';
-final String base = 'http://192.168.46.5:8000/api/v1';
-final String url_image = 'http://192.168.46.5:8000/';
+// final String base = 'http://192.168.1.6:8000/api/v1';
+// final String url_image = 'http://192.168.88.162:8000/';
+final String url_image = 'https://lms.itcctv-soft.com/';
 
 //------Đăng nhập, đăng ký------//
 final String api_register = "$base/register";

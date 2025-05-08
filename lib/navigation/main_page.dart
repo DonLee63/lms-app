@@ -133,7 +133,7 @@ class _MainPageState extends ConsumerState<MainPage> {
     List<BottomNavigationBarItem> items = [
       const BottomNavigationBarItem(
         icon: Icon(Icons.home),
-        label: 'Home',
+        label: 'Trang chủ',
       ),
     ];
 
@@ -156,11 +156,11 @@ class _MainPageState extends ConsumerState<MainPage> {
     items.addAll([
       const BottomNavigationBarItem(
         icon: Icon(Icons.notifications),
-        label: 'Notifications',
+        label: 'Thông báo',
       ),
       const BottomNavigationBarItem(
         icon: Icon(Icons.settings),
-        label: 'Settings',
+        label: 'Cài đặt',
       ),
     ]);
 
